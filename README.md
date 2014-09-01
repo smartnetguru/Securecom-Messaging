@@ -8,11 +8,11 @@ A secure messaging application for Android. It provides:
 
 This project is based on TextSecure from Open WhisperSystems. Securecom Messaging has the following unique features:
 
-1. *Push messaging/data only. SMS and MMS support is completely removed. We have created a separate app to support SMS and MMS.
-2. *The use of email addresses for identity is supported in addition to phone numbers. Conversations between users with email addresses or phone numbers is supported.
-3. *Devices without telephony, such as tablets, are supported.
-4. *Blackberry devices are supported
-5. *By default, Securecom Messaging registers with a server operated by Securecom
+1. Push messaging/data only. SMS and MMS support is completely removed. We have created a separate app to support SMS and MMS.
+2. The use of email addresses for identity is supported in addition to phone numbers. Conversations between users with email addresses or phone numbers is supported.
+3. Devices without telephony, such as tablets, are supported.
+4. Blackberry devices are supported
+5. By default, Securecom Messaging registers with a server operated by Securecom
 
 
 Building and contributing code
@@ -56,7 +56,9 @@ License
 ---------------------
 
 Copyright 2011 Whisper Systems
+
 Copyright 2013 Open WhisperSystems
+
 Copyright 2014 Securecom
 
 Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html
