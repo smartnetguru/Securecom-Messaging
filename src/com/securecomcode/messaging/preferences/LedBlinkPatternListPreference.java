@@ -31,10 +31,10 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.securecomcode.messaging.ApplicationPreferencesActivity;
 import com.securecomcode.messaging.R;
 import com.securecomcode.messaging.util.TextSecurePreferences;
 import com.securecomcode.messaging.util.Dialogs;
-import com.securecomcode.messaging.ApplicationPreferencesActivity;
 
 /**
  * List preference for LED blink pattern notification.
@@ -106,8 +106,7 @@ public class LedBlinkPatternListPreference extends ListPreference implements OnS
 
     initializeSeekBarValues();
     initializeDialog(view);
-    dialogInProgress = true;
-
+    
     dialogInProgress = true;
   }
 

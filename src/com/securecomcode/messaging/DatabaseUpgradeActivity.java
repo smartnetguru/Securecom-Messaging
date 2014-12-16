@@ -27,27 +27,42 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 
-import com.securecomcode.messaging.crypto.DecryptingQueue;
 import com.securecomcode.messaging.crypto.IdentityKeyUtil;
-import com.securecomcode.messaging.notifications.MessageNotifier;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.database.DatabaseFactory;
+import com.securecomcode.messaging.database.SmsDatabase;
+import com.securecomcode.messaging.database.model.SmsMessageRecord;
+import com.securecomcode.messaging.jobs.CreateSignedPreKeyJob;
+import com.securecomcode.messaging.jobs.SmsDecryptJob;
+import com.securecomcode.messaging.notifications.MessageNotifier;
+import com.securecomcode.messaging.util.ParcelUtil;
+import com.securecomcode.messaging.util.Util;
 import com.securecomcode.messaging.util.VersionTracker;
+import org.whispersystems.jobqueue.EncryptionKeys;
 
+import java.io.File;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class DatabaseUpgradeActivity extends Activity {
 
-  public static final int NO_MORE_KEY_EXCHANGE_PREFIX_VERSION = 46;
-  public static final int MMS_BODY_VERSION                    = 46;
-  public static final int TOFU_IDENTITIES_VERSION             = 50;
-  public static final int CURVE25519_VERSION                  = 63;
+  public static final int NO_MORE_KEY_EXCHANGE_PREFIX_VERSION  = 46;
+  public static final int MMS_BODY_VERSION                     = 46;
+  public static final int TOFU_IDENTITIES_VERSION              = 50;
+  public static final int CURVE25519_VERSION                   = 63;
+  public static final int ASYMMETRIC_MASTER_SECRET_FIX_VERSION = 73;
+  public static final int NO_V1_VERSION                        = 83;
+  public static final int SIGNED_PREKEY_VERSION                = 83;
+  public static final int NO_DECRYPT_QUEUE_VERSION             = 84;
 
   private static final SortedSet<Integer> UPGRADE_VERSIONS = new TreeSet<Integer>() {{
     add(NO_MORE_KEY_EXCHANGE_PREFIX_VERSION);
     add(TOFU_IDENTITIES_VERSION);
     add(CURVE25519_VERSION);
+    add(ASYMMETRIC_MASTER_SECRET_FIX_VERSION);
+    add(NO_V1_VERSION);
+    add(SIGNED_PREKEY_VERSION);
+    add(NO_DECRYPT_QUEUE_VERSION);
   }};
 
   private MasterSecret masterSecret;
@@ -68,7 +83,10 @@ public class DatabaseUpgradeActivity extends Activity {
           .execute(VersionTracker.getLastSeenVersion(this));
     } else {
       VersionTracker.updateLastSeenVersion(this);
-      DecryptingQueue.schedulePendingDecrypts(DatabaseUpgradeActivity.this, masterSecret);
+      ApplicationContext.getInstance(this)
+                        .getJobManager()
+                        .setEncryptionKeys(new EncryptionKeys(ParcelUtil.serialize(masterSecret)));
+//      DecryptingQueue.schedulePendingDecrypts(DatabaseUpgradeActivity.this, masterSecret);
       MessageNotifier.updateNotification(DatabaseUpgradeActivity.this, masterSecret);
       startActivity((Intent)getIntent().getParcelableExtra("next_intent"));
       finish();
@@ -76,25 +94,21 @@ public class DatabaseUpgradeActivity extends Activity {
   }
 
   private boolean needsUpgradeTask() {
-    try {
-      int currentVersionCode = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
-      int lastSeenVersion    = VersionTracker.getLastSeenVersion(this);
+    int currentVersionCode = Util.getCurrentApkReleaseVersion(this);
+    int lastSeenVersion    = VersionTracker.getLastSeenVersion(this);
 
-      Log.w("DatabaseUpgradeActivity", "LastSeenVersion: " + lastSeenVersion);
+    Log.w("DatabaseUpgradeActivity", "LastSeenVersion: " + lastSeenVersion);
 
-      if (lastSeenVersion >= currentVersionCode)
-        return false;
-
-      for (int version : UPGRADE_VERSIONS) {
-        Log.w("DatabaseUpgradeActivity", "Comparing: " + version);
-        if (lastSeenVersion < version)
-          return true;
-      }
-
+    if (lastSeenVersion >= currentVersionCode)
       return false;
-    } catch (PackageManager.NameNotFoundException e) {
-      throw new AssertionError(e);
+
+    for (int version : UPGRADE_VERSIONS) {
+      Log.w("DatabaseUpgradeActivity", "Comparing: " + version);
+      if (lastSeenVersion < version)
+        return true;
     }
+
+    return false;
   }
 
   public static boolean isUpdate(Context context) {
@@ -138,6 +152,47 @@ public class DatabaseUpgradeActivity extends Activity {
         }
       }
 
+      if (params[0] < NO_V1_VERSION) {
+        File v1sessions = new File(context.getFilesDir(), "sessions");
+
+        if (v1sessions.exists() && v1sessions.isDirectory()) {
+          File[] contents = v1sessions.listFiles();
+
+          if (contents != null) {
+            for (File session : contents) {
+              session.delete();
+            }
+          }
+
+          v1sessions.delete();
+        }
+      }
+
+      if (params[0] < SIGNED_PREKEY_VERSION) {
+        ApplicationContext.getInstance(getApplicationContext())
+                          .getJobManager()
+                          .add(new CreateSignedPreKeyJob(context, masterSecret));
+      }
+
+      if (params[0] < NO_DECRYPT_QUEUE_VERSION) {
+        SmsDatabase.Reader reader = null;
+        SmsMessageRecord record;
+
+        try {
+          reader = DatabaseFactory.getEncryptingSmsDatabase(getApplicationContext())
+                                  .getDecryptInProgressMessages(masterSecret);
+
+          while ((record = reader.getNext()) != null) {
+            ApplicationContext.getInstance(getApplicationContext())
+                              .getJobManager()
+                              .add(new SmsDecryptJob(getApplicationContext(), record.getId()));
+          }
+        } finally {
+          if (reader != null)
+            reader.close();
+        }
+      }
+
       return null;
     }
 
@@ -153,7 +208,11 @@ public class DatabaseUpgradeActivity extends Activity {
     @Override
     protected void onPostExecute(Void result) {
       VersionTracker.updateLastSeenVersion(DatabaseUpgradeActivity.this);
-      DecryptingQueue.schedulePendingDecrypts(DatabaseUpgradeActivity.this, masterSecret);
+//      DecryptingQueue.schedulePendingDecrypts(DatabaseUpgradeActivity.this, masterSecret);
+      ApplicationContext.getInstance(DatabaseUpgradeActivity.this)
+                        .getJobManager()
+                        .setEncryptionKeys(new EncryptionKeys(ParcelUtil.serialize(masterSecret)));
+
       MessageNotifier.updateNotification(DatabaseUpgradeActivity.this, masterSecret);
 
       startActivity((Intent)getIntent().getParcelableExtra("next_intent"));

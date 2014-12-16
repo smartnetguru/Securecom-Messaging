@@ -22,15 +22,13 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
-import org.whispersystems.textsecure.crypto.IdentityKey;
-import org.whispersystems.textsecure.crypto.IdentityKeyPair;
-import org.whispersystems.textsecure.crypto.InvalidKeyException;
-import org.whispersystems.textsecure.crypto.MasterCipher;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.crypto.ecc.Curve;
-import org.whispersystems.textsecure.crypto.ecc.ECKeyPair;
-import org.whispersystems.textsecure.crypto.ecc.ECPrivateKey;
-import org.whispersystems.textsecure.util.Base64;
+import com.securecomcode.messaging.util.Base64;
+import org.whispersystems.libaxolotl.IdentityKey;
+import org.whispersystems.libaxolotl.IdentityKeyPair;
+import org.whispersystems.libaxolotl.InvalidKeyException;
+import org.whispersystems.libaxolotl.ecc.Curve;
+import org.whispersystems.libaxolotl.ecc.ECKeyPair;
+import org.whispersystems.libaxolotl.ecc.ECPrivateKey;
 
 import java.io.IOException;
 
@@ -80,15 +78,13 @@ public class IdentityKeyUtil {
       ECPrivateKey privateKey   = masterCipher.decryptKey(Base64.decode(retrieve(context, IDENTITY_PRIVATE_KEY_DJB_PREF)));
 
       return new IdentityKeyPair(publicKey, privateKey);
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    } catch (InvalidKeyException e) {
+    } catch (IOException | InvalidKeyException e) {
       throw new AssertionError(e);
     }
   }
 
   public static void generateIdentityKeys(Context context, MasterSecret masterSecret) {
-    ECKeyPair    djbKeyPair     = Curve.generateKeyPair(false);
+    ECKeyPair    djbKeyPair     = Curve.generateKeyPair();
 
     MasterCipher masterCipher   = new MasterCipher(masterSecret);
     IdentityKey  djbIdentityKey = new IdentityKey(djbKeyPair.getPublicKey());
@@ -106,7 +102,7 @@ public class IdentityKeyUtil {
 
   public static void generateCurve25519IdentityKeys(Context context, MasterSecret masterSecret) {
     MasterCipher masterCipher    = new MasterCipher(masterSecret);
-    ECKeyPair    djbKeyPair      = Curve.generateKeyPair(false);
+    ECKeyPair    djbKeyPair      = Curve.generateKeyPair();
     IdentityKey  djbIdentityKey  = new IdentityKey(djbKeyPair.getPublicKey());
     byte[]       djbPrivateKey   = masterCipher.encryptKey(djbKeyPair.getPrivateKey());
 

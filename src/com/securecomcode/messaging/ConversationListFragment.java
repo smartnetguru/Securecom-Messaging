@@ -23,46 +23,60 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.text.TextUtils;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.view.ActionMode;
+import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
 
-import com.actionbarsherlock.app.SherlockListFragment;
-import com.actionbarsherlock.view.ActionMode;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.widget.SearchView;
-
+import com.securecomcode.messaging.components.DefaultSmsReminder;
+import com.securecomcode.messaging.components.PushRegistrationReminder;
+import com.securecomcode.messaging.components.ReminderView;
+import com.securecomcode.messaging.components.SystemSmsImportReminder;
 import com.securecomcode.messaging.database.DatabaseFactory;
 import com.securecomcode.messaging.database.loaders.ConversationListLoader;
 import com.securecomcode.messaging.notifications.MessageNotifier;
 import com.securecomcode.messaging.recipients.Recipients;
 import com.securecomcode.messaging.util.Dialogs;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
 import java.util.Set;
 
 
-public class ConversationListFragment extends SherlockListFragment
+public class ConversationListFragment extends ListFragment
   implements LoaderManager.LoaderCallbacks<Cursor>, ActionMode.Callback
 {
 
   private ConversationSelectedListener listener;
   private MasterSecret                 masterSecret;
   private ActionMode                   actionMode;
-
-  private String queryFilter = "";
+  private ReminderView                 reminderView;
+  private String                       queryFilter  = "";
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle) {
-    return inflater.inflate(R.layout.conversation_list_fragment, container, false);
+    final View view = inflater.inflate(R.layout.conversation_list_fragment, container, false);
+    //reminderView = new ReminderView(getActivity());
+    return view;
+  }
+
+  @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    getListView().setAdapter(null);
   }
 
   @Override
@@ -70,6 +84,8 @@ public class ConversationListFragment extends SherlockListFragment
     super.onActivityCreated(bundle);
 
     setHasOptionsMenu(true);
+    getListView().setAdapter(null);
+    //getListView().addHeaderView(reminderView);
     initializeListAdapter();
     initializeBatchListener();
 
@@ -77,23 +93,16 @@ public class ConversationListFragment extends SherlockListFragment
   }
 
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    this.listener = (ConversationSelectedListener)activity;
+  public void onResume() {
+    super.onResume();
+
+    //initializeReminders();
   }
 
   @Override
-  public void onPrepareOptionsMenu(Menu menu) {
-    MenuInflater inflater = this.getSherlockActivity().getSupportMenuInflater();
-
-    if (this.masterSecret != null) {
-      inflater.inflate(R.menu.conversation_list, menu);
-      initializeSearch((SearchView)menu.findItem(R.id.menu_search).getActionView());
-    } else {
-      inflater.inflate(R.menu.conversation_list_empty, menu);
-    }
-
-    super.onPrepareOptionsMenu(menu);
+  public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    this.listener = (ConversationSelectedListener)activity;
   }
 
   @Override
@@ -126,32 +135,15 @@ public class ConversationListFragment extends SherlockListFragment
     }
   }
 
-  private void setQueryFilter(String query) {
+  public void setQueryFilter(String query) {
     this.queryFilter = query;
     getLoaderManager().restartLoader(0, null, this);
   }
 
   public void resetQueryFilter() {
-    if (!Util.isEmpty(this.queryFilter)) {
+    if (!TextUtils.isEmpty(this.queryFilter)) {
       setQueryFilter("");
     }
-  }
-
-  private void initializeSearch(SearchView searchView) {
-    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-      @Override
-      public boolean onQueryTextSubmit(String query) {
-        if (isAdded()) {
-          setQueryFilter(query);
-          return true;
-        }
-        return false;
-      }
-      @Override
-      public boolean onQueryTextChange(String newText) {
-        return onQueryTextSubmit(newText);
-      }
-    });
   }
 
   private void initializeBatchListener() {
@@ -159,7 +151,7 @@ public class ConversationListFragment extends SherlockListFragment
       @Override
       public boolean onItemLongClick(AdapterView<?> arg0, View v, int position, long id) {
         ConversationListAdapter adapter = (ConversationListAdapter)getListAdapter();
-        actionMode = getSherlockActivity().startActionMode(ConversationListFragment.this);
+        actionMode = ((ActionBarActivity)getActivity()).startSupportActionMode(ConversationListFragment.this);
 
         adapter.initializeBatchMode(true);
         adapter.toggleThreadInBatchSet(((ConversationListItem) v).getThreadId());
@@ -168,6 +160,18 @@ public class ConversationListFragment extends SherlockListFragment
         return true;
       }
     });
+  }
+
+  private void initializeReminders() {
+    /*if (DefaultSmsReminder.isEligible(getActivity())) {
+      reminderView.showReminder(new DefaultSmsReminder(getActivity()));
+    } else if (SystemSmsImportReminder.isEligible(getActivity())) {
+      reminderView.showReminder(new SystemSmsImportReminder(getActivity(), masterSecret));
+    } else if (PushRegistrationReminder.isEligible(getActivity())) {
+      reminderView.showReminder(new PushRegistrationReminder(getActivity(), masterSecret));
+    } else {
+      reminderView.hide();
+    }*/
   }
 
   private void initializeListAdapter() {
@@ -196,8 +200,8 @@ public class ConversationListFragment extends SherlockListFragment
             @Override
             protected void onPreExecute() {
               dialog = ProgressDialog.show(getActivity(),
-                                           getSherlockActivity().getString(R.string.ConversationListFragment_deleting),
-                                           getSherlockActivity().getString(R.string.ConversationListFragment_deleting_selected_threads),
+                                           getActivity().getString(R.string.ConversationListFragment_deleting),
+                                           getActivity().getString(R.string.ConversationListFragment_deleting_selected_threads),
                                            true, false);
             }
 
@@ -262,7 +266,7 @@ public class ConversationListFragment extends SherlockListFragment
 
   @Override
   public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-    MenuInflater inflater = getSherlockActivity().getSupportMenuInflater();
+    MenuInflater inflater = getActivity().getMenuInflater();
     inflater.inflate(R.menu.conversation_list_batch, menu);
 
     mode.setTitle(R.string.conversation_fragment_cab__batch_selection_mode);

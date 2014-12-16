@@ -26,14 +26,14 @@ import android.view.View;
 import android.widget.Button;
 
 import com.securecomcode.messaging.crypto.KeyExchangeInitiator;
+import com.securecomcode.messaging.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.storage.TextSecureSessionStore;
 import com.securecomcode.messaging.protocol.Tag;
 import com.securecomcode.messaging.recipients.Recipient;
 import com.securecomcode.messaging.util.MemoryCleaner;
 import com.securecomcode.messaging.util.TextSecurePreferences;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.storage.RecipientDevice;
-import org.whispersystems.textsecure.storage.Session;
-import org.whispersystems.textsecure.storage.SessionRecordV2;
+import org.whispersystems.libaxolotl.state.SessionStore;
+import org.whispersystems.textsecure.api.push.PushAddress;
 
 /**
  * Activity which prompts the user to initiate a secure
@@ -65,8 +65,8 @@ public class AutoInitiateActivity extends Activity {
 
   private void initializeResources() {
     this.threadId     = this.getIntent().getLongExtra("threadId", -1);
-    this.recipient    = (Recipient)this.getIntent().getParcelableExtra("recipient");
-    this.masterSecret = (MasterSecret)this.getIntent().getParcelableExtra("masterSecret");
+    this.recipient    = this.getIntent().getParcelableExtra("recipient");
+    this.masterSecret = this.getIntent().getParcelableExtra("masterSecret");
 
     ((Button)findViewById(R.id.initiate_button)).setOnClickListener(new OkListener());
     ((Button)findViewById(R.id.cancel_button)).setOnClickListener(new CancelListener());
@@ -117,6 +117,7 @@ public class AutoInitiateActivity extends Activity {
                                              MasterSecret masterSecret,
                                              Recipient recipient)
   {
-    return !Session.hasSession(context, masterSecret, recipient);
+    SessionStore sessionStore = new TextSecureSessionStore(context, masterSecret);
+    return sessionStore.containsSession(recipient.getRecipientId(), PushAddress.DEFAULT_DEVICE_ID);
   }
 }

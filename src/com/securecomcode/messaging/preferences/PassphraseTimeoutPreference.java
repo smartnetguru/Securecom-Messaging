@@ -28,9 +28,9 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.securecomcode.messaging.ApplicationPreferencesActivity;
 import com.securecomcode.messaging.R;
 import com.securecomcode.messaging.util.TextSecurePreferences;
-import com.securecomcode.messaging.ApplicationPreferencesActivity;
 
 /**
  * Dialog preference for encryption passphrase timeout.

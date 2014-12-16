@@ -30,8 +30,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.v7.app.ActionBarActivity;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
@@ -45,24 +47,23 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
 
-import com.securecomcode.messaging.push.PushServiceSocketFactory;
+import com.securecomcode.messaging.crypto.MasterSecret;
+import com.securecomcode.messaging.push.TextSecureCommunicationFactory;
 import com.securecomcode.messaging.service.RegistrationService;
 import com.securecomcode.messaging.util.Dialogs;
 import com.securecomcode.messaging.util.TextSecurePreferences;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.push.ExpectationFailedException;
-import org.whispersystems.textsecure.push.PushServiceSocket;
-import org.whispersystems.textsecure.push.RateLimitException;
-import org.whispersystems.textsecure.util.PhoneNumberFormatter;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.util.Util;
+import org.whispersystems.textsecure.api.TextSecureAccountManager;
+import org.whispersystems.textsecure.api.push.exceptions.ExpectationFailedException;
+import org.whispersystems.textsecure.api.push.exceptions.RateLimitException;
+import org.whispersystems.textsecure.api.util.PhoneNumberFormatter;
 
 import java.io.IOException;
 
 import static com.securecomcode.messaging.service.RegistrationService.RegistrationState;
 
-public class RegistrationProgressActivity extends SherlockActivity {
+public class RegistrationProgressActivity extends ActionBarActivity {
 
   private static final int FOCUSED_COLOR   = Color.parseColor("#ff333333");
   private static final int UNFOCUSED_COLOR = Color.parseColor("#ff808080");
@@ -214,7 +215,7 @@ public class RegistrationProgressActivity extends SherlockActivity {
 
   private void initializeLinks() {
     TextView        failureText     = (TextView) findViewById(R.id.sms_failed_text);
-    String          pretext         = getString(R.string.registration_progress_activity__securecom_messaging_timed_out_while_waiting_for_a_verification_sms_message);
+    String          pretext         = getString(R.string.registration_progress_activity__textsecure_timed_out_while_waiting_for_a_verification_sms_message);
     String          link            = getString(R.string.RegistrationProblemsActivity_possible_problems);
     SpannableString spannableString = new SpannableString(pretext + " " + link);
 
@@ -373,7 +374,7 @@ public class RegistrationProgressActivity extends SherlockActivity {
 
   private void handleSmsVerificationTimeout(RegistrationState state){
       verificationFailureLabel.setText(R.string.registration_progress_activity__sms_verification_failed);
-      verificationFailureWaitingLabel.setText(R.string.registration_progress_activity__securecom_messaging_timed_out_while_waiting_for_a_verification_sms_message);
+      verificationFailureWaitingLabel.setText(R.string.registration_progress_activity__textsecure_timed_out_while_waiting_for_a_verification_sms_message);
       this.verificationFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
               PhoneNumberFormatter.formatNumberInternational(state.number)));
   }
@@ -393,7 +394,7 @@ public class RegistrationProgressActivity extends SherlockActivity {
 
   private void handleSmsVerification(RegistrationState state){
 
-      if(!Util.isAndroidPhone()){
+      if(!org.whispersystems.textsecure.internal.util.Util.isAndroidPhone()){
           if(TextSecurePreferences.getRegistrationOptionSelected(getApplicationContext()).equalsIgnoreCase("Phone")){
               this.smsTextLabel.setText(R.string.registration_progress_activity__sms_verification);
               this.smsTextDesLabel.setText(R.string.registration_progress_activity__securecom_messaging_sms_you_to_verify_your_number);
@@ -401,15 +402,20 @@ public class RegistrationProgressActivity extends SherlockActivity {
       }
       if(TextSecurePreferences.getRegistrationOptionSelected(getApplicationContext()).equalsIgnoreCase("Email")){
           this.smsTextLabel.setText(R.string.registration_progress_activity__email_verification);
-          this.smsTextDesLabel.setText(R.string.registration_progress_activity__securecom_messaging_email_you_to_verify_your_number);
+          this.smsTextDesLabel.setText( R.string.registration_progress_activity__securecom_messaging_email_you_to_verify_your_number);
       }
 
-      if(!Util.isAndroidPhone() || TextSecurePreferences.getRegistrationOptionSelected(getApplicationContext()).equalsIgnoreCase("Email")) {
+      if(!org.whispersystems.textsecure.internal.util.Util.isAndroidPhone() || TextSecurePreferences.getRegistrationOptionSelected(getApplicationContext()).equalsIgnoreCase("Email")) {
           this.verifySmsButton.setEnabled(true);
           this.verifySmsButton.setOnClickListener(new View.OnClickListener() {
               public void onClick(View v) {
+                  RegistrationProgressActivity self = RegistrationProgressActivity.this;
+
+                  if(!com.securecomcode.messaging.util.Util.showAlertOnNoData(self)){
+                      return;
+                  }
                   String code = RegistrationProgressActivity.this.codeSmsEditText.getText().toString();
-                  if (Util.isEmpty(code)) {
+                  if (org.whispersystems.textsecure.internal.util.Util.isEmpty(code)) {
                       Toast.makeText(getApplicationContext(),
                               getString(R.string.RegistrationActivity_you_must_specify_your_verification_code),
                               Toast.LENGTH_LONG).show();
@@ -424,7 +430,7 @@ public class RegistrationProgressActivity extends SherlockActivity {
       }else{
           this.registrationLayout.setVisibility(View.VISIBLE);
       }
-      if(!Util.isValidEmail(state.number)){
+      if(!org.whispersystems.textsecure.internal.util.Util.isValidEmail(state.number)){
           this.smsVerificationFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
                   PhoneNumberFormatter.formatNumberInternational(state.number)));
       }else{
@@ -602,7 +608,7 @@ public class RegistrationProgressActivity extends SherlockActivity {
     public void onClick(View v) {
       final String code = codeEditText.getText().toString();
 
-      if (Util.isEmpty(code)) {
+      if (TextUtils.isEmpty(code)) {
         Toast.makeText(context,
                        getString(R.string.RegistrationProgressActivity_you_must_enter_the_code_you_received_first),
                        Toast.LENGTH_LONG).show();
@@ -659,9 +665,11 @@ public class RegistrationProgressActivity extends SherlockActivity {
         @Override
         protected Integer doInBackground(Void... params) {
           try {
-            PushServiceSocket socket = PushServiceSocketFactory.create(context, e164number, password);
+            TextSecureAccountManager accountManager = TextSecureCommunicationFactory.createManager(context, e164number, password);
             int registrationId = TextSecurePreferences.getLocalRegistrationId(context);
-            socket.verifyAccount(code, signalingKey, true, registrationId);
+
+            accountManager.verifyAccount(code, signalingKey, true, registrationId);
+
             return SUCCESS;
           } catch (ExpectationFailedException e) {
             Log.w("RegistrationProgressActivity", e);
@@ -752,8 +760,8 @@ public class RegistrationProgressActivity extends SherlockActivity {
         @Override
         protected Integer doInBackground(Void... params) {
           try {
-            PushServiceSocket socket = PushServiceSocketFactory.create(context, e164number, password);
-            socket.createAccount(true);
+            TextSecureAccountManager accountManager = TextSecureCommunicationFactory.createManager(context, e164number, password);
+            accountManager.requestVoiceVerificationCode();
 
             return SUCCESS;
           } catch (RateLimitException e) {

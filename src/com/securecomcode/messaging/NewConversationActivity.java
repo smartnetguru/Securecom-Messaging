@@ -20,10 +20,9 @@ package com.securecomcode.messaging;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.securecomcode.messaging.contacts.ContactAccessor;
 import com.securecomcode.messaging.database.DatabaseFactory;
@@ -37,7 +36,7 @@ import com.securecomcode.messaging.util.DynamicLanguage;
 import com.securecomcode.messaging.util.DynamicTheme;
 import com.securecomcode.messaging.util.NumberUtil;
 import com.securecomcode.messaging.util.TextSecurePreferences;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -51,7 +50,7 @@ import static com.securecomcode.messaging.contacts.ContactAccessor.ContactData;
  * @author Moxie Marlinspike
  *
  */
-public class NewConversationActivity extends PassphraseRequiredSherlockFragmentActivity {
+public class NewConversationActivity extends PassphraseRequiredActionBarActivity {
   private final static String TAG                 = "ContactSelectActivity";
   public  final static String MASTER_SECRET_EXTRA = "master_secret";
 
@@ -84,7 +83,7 @@ public class NewConversationActivity extends PassphraseRequiredSherlockFragmentA
 
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
-    MenuInflater inflater = this.getSupportMenuInflater();
+    MenuInflater inflater = this.getMenuInflater();
     menu.clear();
 
     if (TextSecurePreferences.isPushRegistered(this)) inflater.inflate(R.menu.push_directory, menu);
@@ -137,13 +136,12 @@ public class NewConversationActivity extends PassphraseRequiredSherlockFragmentA
     if (contactData == null || contactData.numbers == null) return null;
     Recipients recipients = new Recipients(new LinkedList<Recipient>());
     for (ContactAccessor.NumberData numberData : contactData.numbers) {
-        if (NumberUtil.isValidSmsOrEmailOrGroup(numberData.number)) {
+      if (NumberUtil.isValidSmsOrEmailOrGroup(numberData.number)) {
         try {
           Recipients recipientsForNumber = RecipientFactory.getRecipientsFromString(NewConversationActivity.this,
                                                                                     numberData.number,
                                                                                     false);
           recipients.getRecipientsList().addAll(recipientsForNumber.getRecipientsList());
-
         } catch (RecipientFormattingException rfe) {
           Log.w(TAG, "Caught RecipientFormattingException when trying to convert a selected number to a Recipient.", rfe);
         }

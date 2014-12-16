@@ -15,11 +15,12 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import com.securecomcode.messaging.database.SmsMigrator.ProgressDescription;
 import com.securecomcode.messaging.service.ApplicationMigrationService;
 import com.securecomcode.messaging.service.ApplicationMigrationService.ImportState;
 
-public class DatabaseMigrationActivity extends PassphraseRequiredSherlockActivity {
+public class DatabaseMigrationActivity extends PassphraseRequiredActionBarActivity {
 
   private final ImportServiceConnection serviceConnection  = new ImportServiceConnection();
   private final ImportStateHandler      importStateHandler = new ImportStateHandler();

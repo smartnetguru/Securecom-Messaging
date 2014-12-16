@@ -18,8 +18,6 @@
 
 package ws.com.google.android.mms;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 
 public class ContentType {
@@ -210,13 +208,13 @@ public class ContentType {
     }
 
     public static boolean isOtherType(String contentType) {
-        return (null != contentType) && (contentType.startsWith("application/"));
+        return (null != contentType) && (contentType.startsWith("application/") && (!contentType.startsWith("application/smil")));
     }
 
     public static boolean isDrmType(String contentType) {
         return (null != contentType)
                 && (contentType.equals(APP_DRM_CONTENT)
-                        || contentType.equals(APP_DRM_MESSAGE));
+                || contentType.equals(APP_DRM_MESSAGE));
     }
 
     public static boolean isUnspecified(String contentType) {

@@ -24,13 +24,14 @@ import android.util.Pair;
 
 import com.securecomcode.messaging.crypto.AsymmetricMasterCipher;
 import com.securecomcode.messaging.crypto.AsymmetricMasterSecret;
-import org.whispersystems.textsecure.crypto.InvalidMessageException;
-import org.whispersystems.textsecure.crypto.MasterCipher;
-import org.whispersystems.textsecure.crypto.MasterSecret;
 import com.securecomcode.messaging.database.model.DisplayRecord;
+import com.securecomcode.messaging.database.model.SmsMessageRecord;
 import com.securecomcode.messaging.sms.IncomingTextMessage;
 import com.securecomcode.messaging.sms.OutgoingTextMessage;
 import com.securecomcode.messaging.util.LRUCache;
+import org.whispersystems.libaxolotl.InvalidMessageException;
+import com.securecomcode.messaging.crypto.MasterCipher;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
 import java.lang.ref.SoftReference;
 import java.util.Collections;
@@ -58,8 +59,8 @@ public class EncryptingSmsDatabase extends SmsDatabase {
     return ciphertext;
   }
 
-  public List<Long> insertMessageOutbox(MasterSecret masterSecret, long threadId,
-                                        OutgoingTextMessage message, boolean forceSms)
+  public long insertMessageOutbox(MasterSecret masterSecret, long threadId,
+                                  OutgoingTextMessage message, boolean forceSms)
   {
     long type = Types.BASE_OUTBOX_TYPE;
     message   = message.withBody(getEncryptedBody(masterSecret, message.getMessageBody()));
@@ -73,7 +74,9 @@ public class EncryptingSmsDatabase extends SmsDatabase {
   {
     long type = Types.BASE_INBOX_TYPE;
 
-    if (!message.isSecureMessage() && !message.isEndSession()) {
+    if (masterSecret == null && message.isSecureMessage()) {
+      type |= Types.ENCRYPTION_REMOTE_BIT;
+    } else {
       type |= Types.ENCRYPTION_SYMMETRIC_BIT;
       message = message.withMessageBody(getEncryptedBody(masterSecret, message.getMessageBody()));
     }
@@ -97,8 +100,9 @@ public class EncryptingSmsDatabase extends SmsDatabase {
   }
 
   public void updateBundleMessageBody(MasterSecret masterSecret, long messageId, String body) {
-    updateMessageBodyAndType(messageId, body, Types.TOTAL_MASK,
-                             Types.BASE_INBOX_TYPE | Types.ENCRYPTION_REMOTE_BIT | Types.SECURE_MESSAGE_BIT);
+    String encryptedBody = getEncryptedBody(masterSecret, body);
+    updateMessageBodyAndType(messageId, encryptedBody, Types.TOTAL_MASK,
+                             Types.BASE_INBOX_TYPE | Types.ENCRYPTION_SYMMETRIC_BIT | Types.SECURE_MESSAGE_BIT);
   }
 
   public void updateMessageBody(MasterSecret masterSecret, long messageId, String body) {
@@ -117,9 +121,15 @@ public class EncryptingSmsDatabase extends SmsDatabase {
     return new DecryptingReader(masterSecret, cursor);
   }
 
-  public Reader getMessage(MasterSecret masterSecret, long messageId) {
-    Cursor cursor = super.getMessage(messageId);
-    return new DecryptingReader(masterSecret, cursor);
+  public SmsMessageRecord getMessage(MasterSecret masterSecret, long messageId) throws NoSuchMessageException {
+    Cursor           cursor = super.getMessage(messageId);
+    DecryptingReader reader = new DecryptingReader(masterSecret, cursor);
+    SmsMessageRecord record = reader.getNext();
+
+    reader.close();
+
+    if (record == null) throw new NoSuchMessageException("No message for ID: " + messageId);
+    else                return record;
   }
 
   public Reader getDecryptInProgressMessages(MasterSecret masterSecret) {
@@ -144,6 +154,10 @@ public class EncryptingSmsDatabase extends SmsDatabase {
     protected DisplayRecord.Body getBody(Cursor cursor) {
       long type         = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.TYPE));
       String ciphertext = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.BODY));
+
+      if (ciphertext == null) {
+        return new DisplayRecord.Body("", true);
+      }
 
       try {
         if (SmsDatabase.Types.isSymmetricEncryption(type)) {

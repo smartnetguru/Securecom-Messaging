@@ -1,6 +1,6 @@
 package com.securecomcode.messaging;
 
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
 public interface PassphraseRequiredActivity {
   public void onMasterSecretCleared();

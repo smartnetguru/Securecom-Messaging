@@ -26,7 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.securecomcode.messaging.crypto.InvalidPassphraseException;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.crypto.MasterSecretUtil;
 import com.securecomcode.messaging.util.MemoryCleaner;
 import com.securecomcode.messaging.util.TextSecurePreferences;

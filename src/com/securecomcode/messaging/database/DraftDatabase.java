@@ -24,8 +24,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import org.whispersystems.textsecure.crypto.InvalidMessageException;
-import org.whispersystems.textsecure.crypto.MasterCipher;
+import org.whispersystems.libaxolotl.InvalidMessageException;
+import com.securecomcode.messaging.crypto.MasterCipher;
 
 import java.util.LinkedList;
 import java.util.List;

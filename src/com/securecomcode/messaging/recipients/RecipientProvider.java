@@ -33,7 +33,7 @@ import com.securecomcode.messaging.util.BitmapUtil;
 import com.securecomcode.messaging.util.GroupUtil;
 import com.securecomcode.messaging.util.LRUCache;
 import com.securecomcode.messaging.util.Util;
-import org.whispersystems.textsecure.util.ListenableFutureTask;
+import com.securecomcode.messaging.util.ListenableFutureTask;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,6 +50,7 @@ public class RecipientProvider {
     PhoneLookup.DISPLAY_NAME,
     PhoneLookup.LOOKUP_KEY,
     PhoneLookup._ID,
+    PhoneLookup.NUMBER
   };
 
   public Recipient getRecipient(Context context, long recipientId, boolean asynchronous) {
@@ -60,19 +61,19 @@ public class RecipientProvider {
     else                         return getSynchronousRecipient(context, recipientId);
   }
 
-  private Recipient getSynchronousRecipient(Context context, long recipientId) {
+  private Recipient getSynchronousRecipient(final Context context, final long recipientId) {
     Log.w("RecipientProvider", "Cache miss [SYNC]!");
 
-    Recipient recipient;
+    final Recipient recipient;
     RecipientDetails details;
-    String number = CanonicalAddressDatabase.getInstance(context).getAddressFromId(String.valueOf(recipientId));
+    String number = CanonicalAddressDatabase.getInstance(context).getAddressFromId(recipientId);
     final boolean isGroupRecipient = GroupUtil.isEncodedGroup(number);
 
     if (isGroupRecipient) details = getGroupRecipientDetails(context, number);
     else                  details = getRecipientDetails(context, number);
 
     if (details != null) {
-      recipient = new Recipient(details.name, number, recipientId, details.contactUri, details.avatar,
+      recipient = new Recipient(details.name, details.number, recipientId, details.contactUri, details.avatar,
                                 details.croppedAvatar);
     } else {
       final Bitmap defaultPhoto        = isGroupRecipient
@@ -92,7 +93,7 @@ public class RecipientProvider {
   private Recipient getAsynchronousRecipient(final Context context, final long recipientId) {
     Log.w("RecipientProvider", "Cache miss [ASYNC]!");
 
-    final String number = CanonicalAddressDatabase.getInstance(context).getAddressFromId(String.valueOf(recipientId));
+    final String number = CanonicalAddressDatabase.getInstance(context).getAddressFromId(recipientId);
     final boolean isGroupRecipient = GroupUtil.isEncodedGroup(number);
 
     Callable<RecipientDetails> task = new Callable<RecipientDetails>() {
@@ -103,7 +104,7 @@ public class RecipientProvider {
       }
     };
 
-    ListenableFutureTask<RecipientDetails> future = new ListenableFutureTask<RecipientDetails>(task, null);
+    ListenableFutureTask<RecipientDetails> future = new ListenableFutureTask<RecipientDetails>(task);
 
     asyncRecipientResolver.submit(future);
 
@@ -143,8 +144,7 @@ public class RecipientProvider {
         Uri contactUri      = Contacts.getLookupUri(cursor.getLong(2), cursor.getString(1));
         Bitmap contactPhoto = ContactPhotoFactory.getContactPhoto(context, Uri.withAppendedPath(Contacts.CONTENT_URI,
                                                                                                 cursor.getLong(2)+""));
-
-        return new RecipientDetails(cursor.getString(0), contactUri, contactPhoto,
+        return new RecipientDetails(cursor.getString(0), cursor.getString(3), contactUri, contactPhoto,
                                     BitmapUtil.getCircleCroppedBitmap(contactPhoto));
       }
     } finally {
@@ -167,7 +167,7 @@ public class RecipientProvider {
         if (avatarBytes == null) avatar = ContactPhotoFactory.getDefaultGroupPhoto(context);
         else                     avatar = BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.length);
 
-        return new RecipientDetails(record.getTitle(), null, avatar, BitmapUtil.getCircleCroppedBitmap(avatar));
+        return new RecipientDetails(record.getTitle(), groupId, null, avatar, BitmapUtil.getCircleCroppedBitmap(avatar));
       }
 
       return null;
@@ -179,12 +179,14 @@ public class RecipientProvider {
 
   public static class RecipientDetails {
     public final String name;
+    public final String number;
     public final Bitmap avatar;
     public final Bitmap croppedAvatar;
     public final Uri    contactUri;
 
-    public RecipientDetails(String name, Uri contactUri, Bitmap avatar, Bitmap croppedAvatar) {
+    public RecipientDetails(String name, String number, Uri contactUri, Bitmap avatar, Bitmap croppedAvatar) {
       this.name          = name;
+      this.number        = number;
       this.avatar        = avatar;
       this.croppedAvatar = croppedAvatar;
       this.contactUri    = contactUri;

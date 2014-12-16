@@ -16,12 +16,7 @@
  */
 package com.securecomcode.messaging.util;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-
-import org.whispersystems.textsecure.crypto.MasterSecret;
-
-import android.util.Log;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
 /**
  * This is not straightforward in Java, but this class makes

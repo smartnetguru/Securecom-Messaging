@@ -1,3 +1,20 @@
+/**
+ * Copyright (C) 2011 Whisper Systems
+ * Copyright (C) 2014 Securecom
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.securecomcode.messaging;
 
 import android.app.AlertDialog;
@@ -7,26 +24,26 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragment;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import com.securecomcode.messaging.util.Dialogs;
-import com.securecomcode.messaging.database.EncryptedBackupExporter;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.database.DatabaseFactory;
+import com.securecomcode.messaging.database.EncryptedBackupExporter;
 import com.securecomcode.messaging.database.NoExternalStorageException;
 import com.securecomcode.messaging.database.PlaintextBackupImporter;
 import com.securecomcode.messaging.service.ApplicationMigrationService;
 import com.securecomcode.messaging.service.KeyCachingService;
+import com.securecomcode.messaging.util.Dialogs;
 
 import java.io.IOException;
 
 
-public class ImportFragment extends SherlockFragment {
+public class ImportFragment extends Fragment {
 
   private static final int SUCCESS    = 0;
   private static final int NO_SD_CARD = 1;
@@ -42,23 +59,7 @@ public class ImportFragment extends SherlockFragment {
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle) {
     View layout              = inflater.inflate(R.layout.import_fragment, container, false);
-    View importSmsView       = layout.findViewById(R.id.import_sms             );
-    View importEncryptedView = layout.findViewById(R.id.import_encrypted_backup);
     View importPlaintextView = layout.findViewById(R.id.import_plaintext_backup);
-
-    importSmsView.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        handleImportSms();
-      }
-    });
-
-    importEncryptedView.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        handleImportEncryptedBackup();
-      }
-    });
 
     importPlaintextView.setOnClickListener(new View.OnClickListener() {
       @Override

@@ -17,18 +17,15 @@
  */
 package com.securecomcode.messaging.crypto;
 
-import org.whispersystems.textsecure.crypto.InvalidKeyException;
-import org.whispersystems.textsecure.crypto.InvalidMessageException;
-import org.whispersystems.textsecure.crypto.MasterCipher;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.crypto.PublicKey;
-import org.whispersystems.textsecure.crypto.ecc.Curve;
-import org.whispersystems.textsecure.crypto.ecc.ECKeyPair;
-import org.whispersystems.textsecure.crypto.ecc.ECPrivateKey;
-import org.whispersystems.textsecure.crypto.ecc.ECPublicKey;
-import org.whispersystems.textsecure.util.Base64;
-import org.whispersystems.textsecure.util.Conversions;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.util.Base64;
+import com.securecomcode.messaging.util.Util;
+import org.whispersystems.libaxolotl.InvalidKeyException;
+import org.whispersystems.libaxolotl.InvalidMessageException;
+import org.whispersystems.libaxolotl.ecc.Curve;
+import org.whispersystems.libaxolotl.ecc.ECKeyPair;
+import org.whispersystems.libaxolotl.ecc.ECPrivateKey;
+import org.whispersystems.libaxolotl.ecc.ECPublicKey;
+import com.securecomcode.messaging.util.Conversions;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -76,17 +73,15 @@ public class AsymmetricMasterCipher {
       byte[]       decryptedBody = masterCipher.decryptBytes(parts[1]);
 
       return new String(decryptedBody);
-    } catch (InvalidKeyException ike) {
+    } catch (InvalidKeyException | InvalidMessageException ike) {
       throw new InvalidMessageException(ike);
-    } catch (InvalidMessageException e) {
-      throw new InvalidMessageException(e);
-    }		
+    }
   }
 	
   public String encryptBody(String body) {
     try {
       ECPublicKey  theirPublic        = asymmetricMasterSecret.getDjbPublicKey();
-      ECKeyPair    ourKeyPair         = Curve.generateKeyPair(true);
+      ECKeyPair    ourKeyPair         = Curve.generateKeyPair();
       byte[]       secret             = Curve.calculateAgreement(theirPublic, ourKeyPair.getPrivateKey());
       MasterCipher masterCipher       = getMasterCipherForSecret(secret);
       byte[]       encryptedBodyBytes = masterCipher.encryptBytes(body.getBytes());
@@ -130,9 +125,7 @@ public class AsymmetricMasterCipher {
       Mac mac = Mac.getInstance("HmacSHA256");
       mac.init(new SecretKeySpec(secretBytes, "HmacSHA256"));
       return mac.doFinal(Conversions.intToByteArray(iteration));
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
-    } catch (java.security.InvalidKeyException e) {
+    } catch (NoSuchAlgorithmException | java.security.InvalidKeyException e) {
       throw new AssertionError(e);
     }
   }

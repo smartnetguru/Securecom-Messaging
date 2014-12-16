@@ -22,7 +22,6 @@
         able to access them.
     </string>
     <string name="ApplicationPreferencesActivity_disable">Disable</string>
-    <string name="conversation_activity__type_message_push">Send Securecom Messaging message</string>
     <string name="ApplicationPreferencesActivity_unregistering">Unregistering...</string>
     <string name="ApplicationPreferencesActivity_unregistering_for_data_based_communication">Unregistering for data based communication</string>
     <string name="ApplicationPreferencesActivity_disable_push_messages">Disable push messages?</string>
@@ -37,7 +36,10 @@
     <string name="ApplicationPreferencesActivity_sms_enabled">Incoming SMS Enabled</string>
     <string name="ApplicationPreferencesActivity_touch_to_change_your_default_sms_app">Touch to change your default SMS app</string>
     <string name="ApplicationPreferencesActivity_sms_disabled">Incoming SMS Disabled</string>
-    <string name="ApplicationPreferencesActivity_touch_to_make_securecom_messaging_your_default_sms_app">Touch to make Securecom Messaging your default SMS app</string>
+    <string name="ApplicationPreferencesActivity_touch_to_make_textsecure_your_default_sms_app">Touch to make Securecom Messaging your default SMS app</string>
+
+    <!-- AttchmentManager -->
+    <string name="AttachmentManager_cant_open_media_selection">Can\'t find an app to select media.</string>
 
     <!-- AttachmentTypeSelectorAdapter -->
 
@@ -67,6 +69,7 @@
     <string name="ConversationItem_click_to_approve_unencrypted_sms_dialog_title">Fallback to unencrypted SMS?</string>
     <string name="ConversationItem_click_to_approve_unencrypted_mms_dialog_title">Fallback to unencrypted MMS?</string>
     <string name="ConversationItem_click_to_approve_unencrypted_dialog_message">This message will <b>not</b> be encrypted because a secure session could not be established.\n\nSend insecure message?</string>
+    <string name="ConversationItem_unable_to_open_media">Can\'t find an app able to open this media.</string>
 
     <!-- ConversationActivity -->
     <string name="ConversationActivity_initiate_secure_session_question">Initiate secure session?</string>
@@ -102,13 +105,13 @@
     <string name="ConversationFragment_sender_s_transport_s_sent_s_received_s">Sender: %1$s\nTransport: %2$s\nSent: %3$s\nReceived: %4$s</string>
     <string name="ConversationFragment_confirm_message_delete">Confirm message delete</string>
     <string name="ConversationFragment_are_you_sure_you_want_to_permanently_delete_this_message">Are you sure that you want to permanently delete this message?</string>
-    <string name="ConversationFragment_save_to_sd_card">Save to SD card?</string>
-    <string name="ConversationFragment_this_media_has_been_stored_in_an_encrypted_database_warning">This media has been stored in an encrypted database. The version you save to the SD card will no longer be encrypted. Would you like to continue?</string>
-    <string name="ConversationFragment_error_while_saving_attachment_to_sd_card">Error while saving attachment to SD card!</string>
+    <string name="ConversationFragment_save_to_sd_card">Save to storage?</string>
+    <string name="ConversationFragment_this_media_has_been_stored_in_an_encrypted_database_warning">Saving this media to storage will allow any other apps on your phone to access it.\n\nContinue?</string>
+    <string name="ConversationFragment_error_while_saving_attachment_to_sd_card">Error while saving attachment to storage!</string>
     <string name="ConversationFragment_success_exclamation">Success!</string>
-    <string name="ConversationFragment_unable_to_write_to_sd_card_exclamation">Unable to write to SD card!</string>
+    <string name="ConversationFragment_unable_to_write_to_sd_card_exclamation">Unable to write to storage!</string>
     <string name="ConversationFragment_saving_attachment">Saving attachment</string>
-    <string name="ConversationFragment_saving_attachment_to_sd_card">Saving attachment to SD card...</string>
+    <string name="ConversationFragment_saving_attachment_to_sd_card">Saving attachment to storage...</string>
 
     <!-- ConversationListAdapter -->
     <string name="ConversationListAdapter_key_exchange_message">Key exchange message...</string>
@@ -150,10 +153,10 @@
     </string>
 
     <!-- GroupCreateActivity -->
-    <string name="GroupCreateActivity_actionbar_title">New Group</string>
-    <string name="GroupCreateActivity_actionbar_update_title">Update Group</string>
-    <string name="GroupCreateActivity_group_name_hint">Group Name</string>
-    <string name="GroupCreateActivity_actionbar_mms_title">New MMS Group</string>
+    <string name="GroupCreateActivity_actionbar_title">New group</string>
+    <string name="GroupCreateActivity_actionbar_update_title">Update group</string>
+    <string name="GroupCreateActivity_group_name_hint">Group name</string>
+    <string name="GroupCreateActivity_actionbar_mms_title">New MMS group</string>
     <string name="GroupCreateActivity_contacts_dont_support_push">You have selected a contact that doesn\'t support Securecom Messaging groups, so this group will be MMS.</string>
     <string name="GroupCreateActivity_you_dont_support_push">You\'re not registered for using the data channel, so Securecom Messaging groups are disabled.</string>
     <string name="GroupCreateActivity_contacts_mms_exception">An unexpected error happened that has made group creation fail.</string>
@@ -212,26 +215,22 @@
     <string name="NotificationMmsMessageRecord_multimedia_message">Multimedia message</string>
 
     <!-- MessageRecord -->
-    <string name="MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported">Message encrypted with a legacy protocol version that is no longer supported.  Please ask the sender to upgrade Securecom Messaging to the most recent version.</string>
+    <string name="MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported">Received a message encrypted using an old version of Securecom Messaging that is no longer supported. Please ask the sender to upgrade to the most recent version and resend the message.</string>
 
     <!-- PassphraseChangeActivity -->
     <string name="PassphraseChangeActivity_passphrases_dont_match_exclamation">Passphrases don\'t match!</string>
     <string name="PassphraseChangeActivity_incorrect_old_passphrase_exclamation">Incorrect old passphrase!</string>
 
-    <!-- PassphraseCreateActivity -->
-    <string name="PassphraseCreateActivity_passphrases_dont_match">Passphrases don\'t match</string>
-    <string name="PassphraseCreateActivity_you_must_specify_a_password">You must specify a password</string>
-
     <!-- PassphrasePromptActivity -->
     <string name="PassphrasePromptActivity_enter_passphrase">Enter passphrase</string>
-    <string name="PassphrasePromptActivity_watermark_content_description">TextSecure icon</string>
+    <string name="PassphrasePromptActivity_watermark_content_description">Securecom Messaging icon</string>
     <string name="PassphrasePromptActivity_ok_button_content_description">Submit passphrase</string>
     <string name="PassphrasePromptActivity_invalid_passphrase_exclamation">Invalid passphrase!</string>
 
     <!-- PromptMmsActivity -->
     <string name="PromptMmsActivity_you_must_specify_an_mmsc_url_for_your_carrier">You must specify an MMSC URL for your carrier.</string>
-    <string name="PromptMmsActivity_mms_settings_updated">MMS Settings Updated</string>
-    <string name="PromptMmsActivity_you_can_modify_these_values_from_the_securecom_messaging_settings_menu_at_any_time_">You can modify these values from the Securecom Messaging settings menu at any time.</string>
+    <string name="PromptMmsActivity_mms_settings_updated">MMS settings updated</string>
+    <string name="PromptMmsActivity_you_can_modify_these_values_from_the_textsecure_settings_menu_at_any_time_">You can modify these values from the Securecom Messaging settings menu at any time.</string>
 
     <!-- ReceiveKeyActivity -->
     <string name="ReceiveKeyActivity_the_signature_on_this_key_exchange_is_different">The
@@ -250,8 +249,8 @@
     <string name="ReceiveKeyActivity_processing_key_exchange">Processing key exchange…</string>
 
     <!-- RegistrationActivity -->
-    <string name="RegistrationActivity_connect_with_securecom_messaging">Connect With Securecom</string>
-    <string name="RegistrationActivity_select_your_country">Select Your Country</string>
+    <string name="RegistrationActivity_connect_with_textsecure">Connect With Securecom</string>
+    <string name="RegistrationActivity_select_your_country">Select your country</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">You must specify your
         country code
     </string>
@@ -317,13 +316,13 @@
     <string name="RegistrationProgressActivity_youve_already_requested_a_voice_call">You\'ve already recently requested a voice call. You can request another in 20 minutes.</string>
     <string name="RegistrationProgressActivity_verifying_voice_code">Verifying voice code...</string>
     <string name="RegistrationProgressActivity_registration_conflict">Registration conflict</string>
-    <string name="RegistrationProgressActivity_this_number_is_already_registered_on_a_different">This number is already registered on a different Securecom Messaging server (CyanogenMod?). You must unregistering there before registering here.</string>
+    <string name="RegistrationProgressActivity_this_number_is_already_registered_on_a_different">This number is already registered on a different Securecom Messaging server (CyanogenMod?). You must unregister there before registering here.</string>
 
     <!-- RegistrationService -->
-    <string name="RegistrationService_registration_complete">Registration Complete</string>
-    <string name="RegistrationService_securecom_messaging_registration_has_successfully_completed">Securecom Messaging registration has successfully completed.</string>
-    <string name="RegistrationService_registration_error">Registration Error</string>
-    <string name="RegistrationService_securecom_messaging_registration_has_encountered_a_problem">Securecom Messaging registration has encountered a problem.</string>
+    <string name="RegistrationService_registration_complete">Registration complete</string>
+    <string name="RegistrationService_textsecure_registration_has_successfully_completed">Securecom Messaging registration has successfully completed.</string>
+    <string name="RegistrationService_registration_error">Registration error</string>
+    <string name="RegistrationService_textsecure_registration_has_encountered_a_problem">Securecom Messaging registration has encountered a problem.</string>
 
     <!-- SmsMessageRecord -->
     <string name="SmsMessageRecord_received_corrupted_key_exchange_message">Received corrupted key
@@ -404,8 +403,8 @@
     <string name="ApplicationMigrationService_importing_text_messages">Importing text messages</string>
 
     <!-- KeyCachingService -->
-    <string name="KeyCachingService_securecom_messaging_passphrase_cached">Touch to open.</string>
-    <string name="KeyCachingService_securecom_messaging_passphrase_cached_with_lock">Touch to open, or touch the lock to close.</string>
+    <string name="KeyCachingService_textsecure_passphrase_cached">Touch to open.</string>
+    <string name="KeyCachingService_textsecure_passphrase_cached_with_lock">Touch to open, or touch the lock to close.</string>
     <string name="KeyCachingService_passphrase_cached">Securecom Messaging is unlocked</string>
     <string name="KeyCachingService_lock">Lock with passphrase</string>
 
@@ -436,14 +435,14 @@
     <string name="ViewLocalIdentityActivity_continue">Continue</string>
 
     <!-- SmsReceiver -->
-    <string name="SmsReceiver_currently_unable_to_send_your_sms_message">Currently unable to send your message. It will be sent once service becomes available.</string>
+    <string name="SmsReceiver_currently_unable_to_send_your_sms_message">Currently unable to send your SMS message. It will be sent once service becomes available.</string>
 
     <!-- QuickResponseService -->
-    <string name="QuickResponseService_sorry_quick_response_is_not_yet_supported_by_securecom_messaging">Sorry, Quick Response is not yet supported by Securecom Messaging!</string>
+    <string name="QuickResponseService_sorry_quick_response_is_not_yet_supported_by_textsecure">Sorry, Quick Response is not yet supported by Securecom Messaging!</string>
 
     <!-- auto_initiate_activity -->
-    <string name="auto_initiate_activity__you_have_received_a_message_from_someone_who_supports_securecom_messaging_encrypted_sessions_would_you_like_to_initiate_a_secure_session">You have received a message from someone who supports Securecom Messaging encrypted sessions.  Would you like to initiate a secure session?</string>
-    <string name="auto_initiate_activity__initiate_exchange">Initiate Exchange</string>
+    <string name="auto_initiate_activity__you_have_received_a_message_from_someone_who_supports_textsecure_encrypted_sessions_would_you_like_to_initiate_a_secure_session">You have received a message from someone who supports Securecom Messaging encrypted sessions.  Would you like to initiate a secure session?</string>
+    <string name="auto_initiate_activity__initiate_exchange">Initiate exchange</string>
 
     <!-- change_passphrase_activity -->
     <string name="change_passphrase_activity__old_passphrase">OLD PASSPHRASE:</string>
@@ -469,28 +468,32 @@
     <string name="contact_selection_recent_activity__no_recent_calls">No recent calls.</string>
 
     <!-- conversation_activity -->
-    <string name="conversation_activity__type_message"><small>Send a message</small></string>
+    <string name="conversation_activity__type_message_push">Send message</string>
     <string name="conversation_activity__type_message_sms_secure">Send secure SMS</string>
     <string name="conversation_activity__type_message_sms_insecure">Send insecure SMS</string>
     <string name="conversation_activity__type_message_mms_secure">Send secure MMS</string>
     <string name="conversation_activity__type_message_mms_insecure">Send insecure MMS</string>
     <string name="conversation_activity__send">Send</string>
     <string name="conversation_activity__remove">Remove</string>
+    <string name="conversation_activity__window_description">Conversation with %1$s</string>
+    <string name="conversation_activity__compose_description">Message composition</string>
+    <string name="conversation_activity__emoji_toggle_description">Toggle emoji keyboard</string>
 
     <!-- conversation_item -->
     <string name="conversation_item__mms_image_description">Media message</string>
     <string name="conversation_item__play_button_description">Play button</string>
-    <string name="conversation_item__secure_message_description">Secure message indicator</string>
+    <string name="conversation_item__secure_message_description">Secure message</string>
 
     <!-- conversation_item_sent -->
     <string name="conversation_item_sent__download">Download</string>
     <string name="conversation_item_sent__downloading">Downloading</string>
-    <string name="conversation_item_sent__send_failed_indicator_description">Send Failed Indicator</string>
+    <string name="conversation_item_sent__send_failed_indicator_description">Send Failed</string>
     <string name="conversation_item_sent__pending_approval_description">Pending Approval</string>
-    <string name="conversation_item_sent__delivered_description">Delivered Indicator</string>
+    <string name="conversation_item_sent__delivered_description">Delivered</string>
 
     <!-- conversation_item_received -->
     <string name="conversation_item_received__download">Download</string>
+    <string name="conversation_item_received__contact_photo_description">Contact photo</string>
     <string name="conversation_item_received__downloading">Downloading</string>
 
     <!-- conversation_fragment_cab -->
@@ -547,8 +550,8 @@
     <string name="import_fragment__import_the_database_from_the_default_system">Import the database
         from the default system messenger app.
     </string>
-    <string name="import_fragment__import_encrypted_backup">Import Encrypted Backup</string>
-    <string name="import_fragment__restore_a_previously_exported_encrypted_securecom_messaging_backup">
+    <string name="import_fragment__import_encrypted_backup">Import encrypted backup</string>
+    <string name="import_fragment__restore_a_previously_exported_encrypted_textsecure_backup">
         Restore a previously exported encrypted Securecom Messaging backup.
     </string>
     <string name="import_fragment__import_plaintext_backup">Import plaintext backup</string>
@@ -561,11 +564,11 @@
     <string name="mms_preferences_activity__manual_mms_settings_are_required">Manual MMS settings are required for your phone.</string>
 
     <!-- prompt_passphrase_activity -->
-    <string name="prompt_passphrase_activity__securecom_messaging_passphrase">Securecom Messaging PASSPHRASE</string>
+    <string name="prompt_passphrase_activity__textsecure_passphrase">TEXTSECURE PASSPHRASE</string>
     <string name="prompt_passphrase_activity__unlock">Unlock</string>
 
     <!-- prompt_mms_activity -->
-    <string name="prompt_mms_activity__securecom_messaging_requires_mms_settings_to_deliver_media_and_group_messages">Securecom Messaging requires MMS settings to deliver media and group messages through your wireless carrier. Your device does not make this information available, which is occasionally true for locked devices and other restrictive configurations.</string>
+    <string name="prompt_mms_activity__textsecure_requires_mms_settings_to_deliver_media_and_group_messages">Securecom Messaging requires MMS settings to deliver media and group messages through your wireless carrier. Your device does not make this information available, which is occasionally true for locked devices and other restrictive configurations.</string>
     <string name="prompt_mms_activity__to_send_media_and_group_messages_click_ok">To send media and group messages, click \'OK\' and complete the requested settings. The MMS settings for your carrier can generally be located by searching for \'your carrier APN\'. You will only need to do this once.</string>
     <string name="prompt_mms_activity__mmsc_url_required">MMSC URL (REQUIRED):</string>
     <string name="prompt_mms_activity__mms_proxy_host_optional">MMS PROXY HOST (OPTIONAL):</string>
@@ -575,9 +578,8 @@
     <string name="receive_key_activity__complete">Complete</string>
 
     <!-- registration_activity -->
-    <string name="registration_activity__securecom_messaging_can_use_instant_messages_to_avoid_sms_charges_when_communicating_with_other_securecom_messaging_users">
-        Securecom Messaging can use instant messages to increase privacy and avoid SMS charges when communicating with other
-        Securecom Messaging users. To enable this feature, please verify your email.
+    <string name="registration_activity__textsecure_can_use_instant_messages_to_avoid_sms_charges_when_communicating_with_other_textsecure_users">
+        Registering is free and increases privacy when messaging other Securecom Messaging users. Please verify your phone number.
     </string>
     <string name="registration_activity__your_country">YOUR COUNTRY</string>
     <string name="registration_activity__your_email">YOUR EMAIL</string>
@@ -587,7 +589,7 @@
     <string name="registration_activity__phone_number">PHONE NUMBER</string>
     <string name="registration_activity__email_address">yourname@yourmail.com</string>
     <string name="registration_activity__register">Register</string>
-    <string name="registration_activity__registration_will_transmit_some_contact_information_to_the_server_temporariliy">Registration will transmit some contact information to the server temporarily.</string>
+    <string name="registration_activity__registration_will_transmit_some_contact_information_to_the_server_temporariliy">Registration transmits some contact information to the server. It is not stored.</string>
     <string name="registration_activity__skip">Skip</string>
 
     <!-- registration_problems -->
@@ -607,7 +609,7 @@
         your region.
     </string>
     <string name="registration_problems__google_voice">Google Voice.</string>
-    <string name="registration_problems__securecom_messaging_will_not_work_with_google_voice_numbers">
+    <string name="registration_problems__textsecure_will_not_work_with_google_voice_numbers">
         Securecom Messaging will not work with Google Voice numbers.
     </string>
 
@@ -615,8 +617,8 @@
     <string name="registration_progress_activity__voice_verification">Voice Verification</string>
     <string name="registration_progress_activity__email_verification">Email Verification</string>
     <string name="registration_progress_activity__sms_verification">SMS Verification</string>
-    <string name="registration_progress_activity__securecom_messaging_can_also_call_you_to_verify_your_number">
-        Securecom Messaging can also call you to verify your number. Tap Call Me and enter the six digit
+    <string name="registration_progress_activity__textsecure_can_also_call_you_to_verify_your_number">
+        Securecom Messaging can also call you to verify your number. Tap \'Call Me\' and enter the six digit
         code that you hear below.
     </string>
     <string name="registration_progress_activity__securecom_messaging_sms_you_to_verify_your_number">
@@ -631,7 +633,7 @@
     <string name="registration_progress_activity__call_me">Call me</string>
     <string name="registration_progress_activity__edit_number">Edit number</string>
     <string name="registration_progress_activity__connectivity_error">Connectivity error.</string>
-    <string name="registration_progress_activity__securecom_messaging_was_unable_to_connect_to_the_push_service">
+    <string name="registration_progress_activity__textsecure_was_unable_to_connect_to_the_push_service">
         Securecom Messaging was unable to connect to the push service.
     </string>
     <string name="registration_progress_activity__some_possible_problems_include">Some possible
@@ -642,15 +644,15 @@
     </string>
     <string name="registration_progress_activity__your_device_needs_network_connectivity">Your
         device needs network connectivity in order to use this Securecom Messaging feature. Check to ensure
-        that it is connected to 3G or Wifi.
+        that it is connected to 3G or Wi-Fi.
     </string>
     <string name="registration_progress_activity__restrictive_firewall">Restrictive firewall.
     </string>
     <string name="registration_progress_activity__if_you_are_connected_via_wifi_its_possible_that_there_is_a_firewall">
-        If you are connected via wifi, it\'s possible that there is a firewall blocking access to
+        If you are connected via Wi-Fi, it\'s possible that there is a firewall blocking access to
         the Securecom Messaging server. Try another network or mobile data.
     </string>
-    <string name="registration_progress_activity__securecom_messaging_will_now_automatically_verify_your_number_with_a_confirmation_sms_message">
+    <string name="registration_progress_activity__textsecure_will_now_automatically_verify_your_number_with_a_confirmation_sms_message">
         Securecom Messaging will now verify you with a confirmation Email message.
     </string>
     <string name="registration_progress_activity__connecting">Connecting...</string>
@@ -664,7 +666,7 @@
     <string name="registration_progress_activity__this_couild_take_a_moment_please_be_patient">This
         could take a moment. Please be patient, we\'ll notify you when verification is complete.
     </string>
-    <string name="registration_progress_activity__securecom_messaging_timed_out_while_waiting_for_a_verification_sms_message">
+    <string name="registration_progress_activity__textsecure_timed_out_while_waiting_for_a_verification_sms_message">
         Securecom Messaging timed out while waiting for a verification SMS message.
     </string>
     <string name="registration_progress_activity__securecom_messaging_timed_out_while_waiting_for_a_verification_email_message">
@@ -700,32 +702,31 @@
     <string name="verify_keys_activity__you_read_this">You read this:</string>
 
     <!-- AndroidManifest.xml -->
-
-    <string name="AndroidManifest__create_passphrase">Create Passphrase</string>
-    <string name="AndroidManifest__enter_passphrase">Enter Passphrase</string>
-    <string name="AndroidManifest__select_contacts">Select Contacts</string>
-    <string name="AndroidManifest__select_contact">Select Contact</string>
-    <string name="AndroidManifest__securecom_messaging_detected">Securecom Messaging Detected</string>
-    <string name="AndroidManifest__public_identity_key">Public Identity Key</string>
-    <string name="AndroidManifest__change_passphrase">Change Passphrase</string>
-    <string name="AndroidManifest__verify_session">Verify Session</string>
-    <string name="AndroidManifest__verify_identity">Verify Identity</string>
-    <string name="AndroidManifest__manage_identity_keys">Manage Identity Keys</string>
-    <string name="AndroidManifest__complete_key_exchange">Complete Key Exchange</string>
-    <string name="AndroidManifest__log_submit">Submit Debug Logs</string>
+    <string name="AndroidManifest__create_passphrase">Create passphrase</string>
+    <string name="AndroidManifest__enter_passphrase">Enter passphrase</string>
+    <string name="AndroidManifest__select_contacts">Select contacts</string>
+    <string name="AndroidManifest__select_contact">Select contact</string>
+    <string name="AndroidManifest__textsecure_detected">Securecom Messaging detected</string>
+    <string name="AndroidManifest__public_identity_key">Public identity key</string>
+    <string name="AndroidManifest__change_passphrase">Change passphrase</string>
+    <string name="AndroidManifest__verify_session">Verify session</string>
+    <string name="AndroidManifest__verify_identity">Verify identity</string>
+    <string name="AndroidManifest__manage_identity_keys">Manage identity keys</string>
+    <string name="AndroidManifest__complete_key_exchange">Complete key exchange</string>
+    <string name="AndroidManifest__log_submit">Submit debug logs</string>
+    <string name="AndroidManifest__media_preview">Media Preview</string>
 
     <!-- arrays.xml -->
-    <string name="arrays__import_export">Import / Export</string>
-    <string name="arrays__my_identity_key">My Identity Key</string>
-    <string name="arrays__contact_keys">Contact Keys</string>
+    <string name="arrays__import_export">Import / export</string>
+    <string name="arrays__my_identity_key">My identity key</string>
 
     <!-- preferences.xml -->
     <string name="preferences__general">General</string>
-    <string name="preferences__push_sms_category">Push<!-- and SMS--></string>
+    <string name="preferences__push_sms_category">Push and SMS</string>
     <string name="preferences__pref_all_sms_title">Receive all SMS</string>
     <string name="preferences__pref_all_mms_title">Receive all MMS</string>
-    <string name="preferences__use_securecom_messaging_for_viewing_and_storing_all_incoming_text_messages">Use Securecom Messaging for viewing and storing all incoming text messages</string>
-    <string name="preferences__use_securecom_messaging_for_viewing_and_storing_all_incoming_multimedia_messages">Use Securecom Messaging for viewing and storing all incoming multimedia messages</string>
+    <string name="preferences__use_textsecure_for_viewing_and_storing_all_incoming_text_messages">Use Securecom Messaging for viewing and storing all incoming text messages</string>
+    <string name="preferences__use_textsecure_for_viewing_and_storing_all_incoming_multimedia_messages">Use Securecom Messaging for viewing and storing all incoming multimedia messages</string>
     <string name="preferences__input_settings">Input Settings</string>
     <string name="preferences__enable_enter_key_title">Enable Enter key</string>
     <string name="preferences__replace_smiley_with_enter_key">Replace the smiley key with an Enter key</string>
@@ -799,17 +800,17 @@
     <string name="preferences__dark_theme">Dark theme</string>
     <string name="preferences__appearance">Appearance</string>
     <string name="preferences__theme">Theme</string>
-    <string name="preferences__default" translatable="false">Default</string>
+    <string name="preferences__default">Default</string>
     <string name="preferences__language">Language</string>
     <string name="preferences__make_default_sms_app">Set as default SMS app</string>
-    <string name="preferences__make_securecom_messaging_the_default_sms_mms_app">Make Securecom Messaging the default SMS/MMS application for your system.</string>
+    <string name="preferences__make_textsecure_the_default_sms_mms_app">Make Securecom Messaging the default SMS/MMS application for your system.</string>
     <string name="preferences__use_data_channel">Push messages</string>
-    <string name="preferences__use_the_data_channel_for_communication_with_other_securecom_messaging_users">
-        Increase privacy and avoid SMS fees by using the data channel for communication with other Securecom Messaging users
+    <string name="preferences__use_the_data_channel_for_communication_with_other_textsecure_users">
+        Use push for private communication with other Securecom Messaging users
     </string>
     <string name="preferences__allow_sms_fallback">Allow outgoing SMS to</string>
     <string name="preferences__allow_sms_fallback_disabled_reason">Securecom Messaging is currently your default SMS app. Please set another default SMS app first to change this preference.</string>
-    <string name="preferences__refresh_push_directory">Refresh Push Directory</string>
+    <string name="preferences__refresh_push_directory">Refresh push directory</string>
     <string name="preferences__submit_debug_log">Submit debug log</string>
     <string name="preferences__sms_outgoing_push_users">Securecom Messaging users</string>
     <string name="preferences__sms_fallback_push_users_ask">(ask first)</string>
@@ -823,9 +824,9 @@
     <!-- **************************************** -->
 
     <!-- contact_selection_list -->
-    <string name="contact_selection_list__menu_select_all">Select All</string>
-    <string name="contact_selection_list__menu_unselect_all">Unselect All</string>
-    <string name="contact_selection_list__header_securecom_messaging_users">Securecom Messaging USERS</string>
+    <string name="contact_selection_list__menu_select_all">Select all</string>
+    <string name="contact_selection_list__menu_unselect_all">Unselect all</string>
+    <string name="contact_selection_list__header_textsecure_users">Securecom Messaging USERS</string>
     <string name="contact_selection_list__header_other">ALL CONTACTS</string>
     <string name="contact_selection_list__unknown_contact">New message to...</string>
 
@@ -836,7 +837,7 @@
     <string name="push_directory__menu_refresh">Refresh contact list</string>
 
     <!-- conversation_button_context -->
-    <string name="conversation_button_context__send_textsecure_message">Send Securecom Messaging message</string>
+    <string name="conversation_button_context__send_textsecure_message">Send message</string>
     <string name="conversation_button_context__send_secure_sms">Send secure SMS</string>
     <string name="conversation_button_context__send_insecure_sms">Send insecure SMS</string>
     <string name="conversation_button_context__send_secure_mms">Send secure MMS</string>
@@ -904,23 +905,39 @@
     <!-- verify_keys -->
     <string name="verify_keys__menu_verified">Verified</string>
 
-    <!-- EOF -->
-
-    <string name="securecom_messaging_email_not_registered_with_server_exclamation"> Contact not registered with Securecom Messaging!</string>
-    <string name="securecom_messaging_not_registered_with_server_exclamation">Not registered!</string>
-    <string name="securecom_messaging_the_contact_you_selected_is_not_registered_with_securecom_messaging_both_parties_of_securecom_messaging_need_to_have_securecom_messaging_installed">You need to be registered to use this feature!,  Would you like to register now?</string>
-    <string name="securecom_messaging_the_email_you_selected_is_not_registered_with_securecom_messaging_both_parties_of_securecom_messaging_need_to_have_securecom_messaging_installed">The contact you selected is not registered with Securecom Messaging.  Both parties need to have Securecom Messaging installed in order to have a secure conversation.  Would you like to send a Securecom Messaging install link to the contact you were trying to text?</string>
+    <!-- reminder_header -->
+    <string name="reminder_header_sms_default_title">Use as default SMS app?</string>
+    <string name="securecom_messaging_email_not_registered_with_server_exclamation">Contact not registered with Securecom Messaging!</string>
+    <string name="reminder_header_sms_default_text">Securecom Messaging is not currently your default SMS app.</string>
+    <string name="securecom_messaging_the_contact_you_selected_is_not_registered_with_securecom_messaging_both_parties_of_securecom_messaging_need_to_have_securecom_messaging_installed">You need to be registered to use this feature! Would you like to register now?</string>
+    <string name="securecom_messaging_the_email_you_selected_is_not_registered_with_securecom_messaging_both_parties_of_securecom_messaging_need_to_have_securecom_messaging_installed">The contact you selected is not registered with Securecom Messaging. Both parties need to have Securecom Messaging installed in order to have a secure conversation. Would you like to send a Securecom Messaging install link to the contact you were trying to text?</string>
+    <string name="reminder_header_sms_import_title">Import system SMS?</string>
     <string name="securecom_messaging_yes_exclamation">Yes!</string>
     <string name="securecom_messaging_no_thanks_exclamation">No thanks!</string>
     <string name="registration_spinner_label">Choose an option to register</string>
-    <string name="registration_conversation_item_other_content_not_supported_toast_label">Sorry, Preview Not Available!</string>
+    <string name="reminder_header_sms_import_text">Securecom Messaging can copy your phone\'s SMS messages into its encrypted database.</string>
+    <string name="reminder_header_push_title">Enable Securecom Messaging messages?</string>
+    <string name="reminder_header_push_text">Instant delivery, stronger privacy, and no SMS fees.</string>
 
+    <!-- MediaPreviewActivity -->
+    <string name="MediaPreviewActivity_you">You</string>
+    
     <string-array name="registration_options">
         <item>Phone Number</item>
         <item>Email</item>
     </string-array>
 
     <string name="text_invitation_successfully_sent">Invitation Successfully Sent!</string>
+    <!-- media_preview -->
+    <string name="media_preview__save_title">Save</string>
+
+    <!-- media_preview_activity -->
+    <string name="media_preview_activity__image_content_description">Image Preview</string>
     <string name="text_invitation_failed_to_send">Failed to Send Invitation!</string>
+    <string name="text_contact_entry_is_empty">Contact card is empty!</string>
+    <string name="Warning_turn_on_packet_data_or_use_wi_fi_to_complete_this_action">Turn on packet data or use Wi-Fi to complete this action</string>
+    <string name="Warning_title_cellular_data_is_turned_off">Cellular Data is turned OFF</string>
+    <string name="Warning_register">You need to be registered to complete this action</string>
+    <!-- EOF -->
 
 </resources>

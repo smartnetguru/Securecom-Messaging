@@ -26,8 +26,6 @@ import com.securecomcode.messaging.database.SmsDatabase;
 import com.securecomcode.messaging.protocol.Tag;
 import com.securecomcode.messaging.recipients.Recipient;
 import com.securecomcode.messaging.recipients.Recipients;
-import com.securecomcode.messaging.util.GroupUtil;
-import org.whispersystems.textsecure.util.Util;
 
 /**
  * The message record model which represents standard SMS messages.
@@ -43,11 +41,12 @@ public class SmsMessageRecord extends MessageRecord {
                           Recipient individualRecipient,
                           int recipientDeviceId,
                           long dateSent, long dateReceived,
+                          int receiptCount,
                           long type, long threadId,
                           int status)
   {
     super(context, id, body, recipients, individualRecipient, recipientDeviceId,
-          dateSent, dateReceived, threadId, getGenericDeliveryStatus(status), type);
+          dateSent, dateReceived, threadId, receiptCount, getGenericDeliveryStatus(status), type);
   }
 
   public long getType() {

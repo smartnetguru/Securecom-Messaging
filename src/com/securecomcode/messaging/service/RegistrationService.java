@@ -26,25 +26,24 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.google.android.gcm.GCMRegistrar;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import com.securecomcode.messaging.R;
 import com.securecomcode.messaging.crypto.IdentityKeyUtil;
-import com.securecomcode.messaging.gcm.GcmIntentService;
-import com.securecomcode.messaging.gcm.GcmRegistrationTimeoutException;
-import com.securecomcode.messaging.push.PushServiceSocketFactory;
+import com.securecomcode.messaging.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.PreKeyUtil;
+import com.securecomcode.messaging.push.TextSecureCommunicationFactory;
 import com.securecomcode.messaging.util.DirectoryHelper;
 import com.securecomcode.messaging.util.TextSecurePreferences;
-import org.whispersystems.textsecure.crypto.IdentityKey;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.crypto.PreKeyUtil;
-import org.whispersystems.textsecure.crypto.ecc.Curve;
-import org.whispersystems.textsecure.push.ExpectationFailedException;
-import org.whispersystems.textsecure.push.PushServiceSocket;
-import org.whispersystems.textsecure.storage.PreKeyRecord;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.util.Util;
+import org.whispersystems.libaxolotl.IdentityKeyPair;
+import org.whispersystems.libaxolotl.state.PreKeyRecord;
+import org.whispersystems.libaxolotl.state.SignedPreKeyRecord;
+import org.whispersystems.libaxolotl.util.KeyHelper;
+import org.whispersystems.libaxolotl.util.guava.Optional;
+import org.whispersystems.textsecure.api.TextSecureAccountManager;
+import org.whispersystems.textsecure.api.push.exceptions.ExpectationFailedException;
 
 import java.io.IOException;
 import java.util.List;
@@ -80,10 +79,8 @@ public class RegistrationService extends Service {
   public static final String NOTIFICATION_TEXT      = "com.securecomcode.messaging.NOTIFICATION_TEXT";
   public static final String CHALLENGE_EVENT        = "com.securecomcode.messaging.CHALLENGE_EVENT";
   public static final String REGISTRATION_EVENT     = "com.securecomcode.messaging.REGISTRATION_EVENT";
-  public static final String GCM_REGISTRATION_EVENT = "com.securecomcode.messaging.GCM_REGISTRATION_EVENT";
 
   public static final String CHALLENGE_EXTRA        = "CAAChallenge";
-  public static final String GCM_REGISTRATION_ID    = "GCMRegistrationId";
 
   private static final long REGISTRATION_TIMEOUT_MILLIS = 120000;
 
@@ -94,7 +91,6 @@ public class RegistrationService extends Service {
 
   private volatile Handler                 registrationStateHandler;
   private volatile ChallengeReceiver       challengeReceiver;
-  private volatile GcmRegistrationReceiver gcmRegistrationReceiver;
   private          String                  challenge;
   private          String                  gcmRegistrationId;
   private          long                    verificationStartTime;
@@ -148,30 +144,16 @@ public class RegistrationService extends Service {
   }
 
   private void initializeChallengeListener() {
-    this.challenge      = null;
+    this.challenge    = null;
     challengeReceiver = new ChallengeReceiver();
     IntentFilter filter = new IntentFilter(CHALLENGE_EVENT);
     registerReceiver(challengeReceiver, filter);
-  }
-
-  private void initializeGcmRegistrationListener() {
-    this.gcmRegistrationId = null;
-    gcmRegistrationReceiver = new GcmRegistrationReceiver();
-    IntentFilter filter = new IntentFilter(GCM_REGISTRATION_EVENT);
-    registerReceiver(gcmRegistrationReceiver, filter);
   }
 
   private synchronized void shutdownChallengeListener() {
     if (challengeReceiver != null) {
       unregisterReceiver(challengeReceiver);
       challengeReceiver = null;
-    }
-  }
-
-  private synchronized void shutdownGcmRegistrationListener() {
-    if (gcmRegistrationReceiver != null) {
-      unregisterReceiver(gcmRegistrationReceiver);
-      gcmRegistrationReceiver = null;
     }
   }
 
@@ -197,11 +179,9 @@ public class RegistrationService extends Service {
     MasterSecret masterSecret = intent.getParcelableExtra("master_secret");
 
     try {
-      initializeGcmRegistrationListener();
+      TextSecureAccountManager accountManager = TextSecureCommunicationFactory.createManager(this, number, password);
 
-      PushServiceSocket socket = PushServiceSocketFactory.create(this, number, password);
-
-      handleCommonRegistration(masterSecret, socket, number);
+      handleCommonRegistration(masterSecret, accountManager, number);
 
       markAsVerified(number, password, signalingKey);
 
@@ -215,12 +195,6 @@ public class RegistrationService extends Service {
       Log.w("RegistrationService", e);
       setState(new RegistrationState(RegistrationState.STATE_NETWORK_ERROR, number));
       broadcastComplete(false);
-    } catch (GcmRegistrationTimeoutException e) {
-      Log.w("RegistrationService", e);
-      setState(new RegistrationState(RegistrationState.STATE_GCM_TIMEOUT));
-      broadcastComplete(false);
-    } finally {
-      shutdownGcmRegistrationListener();
     }
   }
 
@@ -237,7 +211,7 @@ public class RegistrationService extends Service {
     int          registrationId = TextSecurePreferences.getLocalRegistrationId(this);
 
     if (registrationId == 0) {
-      registrationId = Util.generateRegistrationId();
+      registrationId = KeyHelper.generateRegistrationId(false);
       TextSecurePreferences.setLocalRegistrationId(this, registrationId);
     }
 
@@ -246,18 +220,16 @@ public class RegistrationService extends Service {
       String signalingKey = Util.getSecret(52);
 
       initializeChallengeListener();
-      initializeGcmRegistrationListener();
 
       setState(new RegistrationState(RegistrationState.STATE_CONNECTING, number));
-      PushServiceSocket socket = PushServiceSocketFactory.create(this, number, password);
-      socket.createAccount(false);
+      TextSecureAccountManager accountManager = TextSecureCommunicationFactory.createManager(this, number, password);
+      accountManager.requestSmsVerificationCode();
 
       setState(new RegistrationState(RegistrationState.STATE_SMS_VERIFICATION, number));
       String challenge = waitForChallenge();
+      accountManager.verifyAccount(challenge, signalingKey, true, registrationId);
 
-      socket.verifyAccount(challenge, signalingKey, true, registrationId);
-
-      handleCommonRegistration(masterSecret, socket, number);
+      handleCommonRegistration(masterSecret, accountManager, number);
       markAsVerified(number, password, signalingKey);
 
       setState(new RegistrationState(RegistrationState.STATE_COMPLETE, number));
@@ -278,31 +250,26 @@ public class RegistrationService extends Service {
       Log.w("RegistrationService", e);
       setState(new RegistrationState(RegistrationState.STATE_NETWORK_ERROR, number));
       broadcastComplete(false);
-    } catch (GcmRegistrationTimeoutException e) {
-      Log.w("RegistrationService", e);
-      setState(new RegistrationState(RegistrationState.STATE_GCM_TIMEOUT));
-      broadcastComplete(false);
-    } finally {
+    }finally {
       shutdownChallengeListener();
-      shutdownGcmRegistrationListener();
     }
   }
 
-  private void handleCommonRegistration(MasterSecret masterSecret, PushServiceSocket socket, String number)
-      throws GcmRegistrationTimeoutException, IOException
-  {
+  private void handleCommonRegistration(MasterSecret masterSecret, TextSecureAccountManager accountManager, String number) throws IOException {
     setState(new RegistrationState(RegistrationState.STATE_GENERATING_KEYS, number));
-    IdentityKey        identityKey = IdentityKeyUtil.getIdentityKey(this);
-    List<PreKeyRecord> records     = PreKeyUtil.generatePreKeys(this, masterSecret);
-    PreKeyRecord       lastResort  = PreKeyUtil.generateLastResortKey(this, masterSecret);
-    socket.registerPreKeys(identityKey, lastResort, records);
+    IdentityKeyPair    identityKey  = IdentityKeyUtil.getIdentityKeyPair(this, masterSecret);
+    List<PreKeyRecord> records      = PreKeyUtil.generatePreKeys(this, masterSecret);
+    PreKeyRecord       lastResort   = PreKeyUtil.generateLastResortKey(this, masterSecret);
+    SignedPreKeyRecord signedPreKey = PreKeyUtil.generateSignedPreKey(this, masterSecret, identityKey);
+    accountManager.setPreKeys(identityKey.getPublicKey(),lastResort, signedPreKey, records);
 
     setState(new RegistrationState(RegistrationState.STATE_GCM_REGISTERING, number));
-    GCMRegistrar.register(this, GcmIntentService.GCM_SENDER_ID);
-    String gcmRegistrationId = waitForGcmRegistrationId();
-    socket.registerGcmId(gcmRegistrationId);
 
-    DirectoryHelper.refreshDirectory(this, socket, number);
+    String gcmRegistrationId = GoogleCloudMessaging.getInstance(this).register("225505072490");
+    TextSecurePreferences.setGcmRegistrationId(this, gcmRegistrationId);
+    accountManager.setGcmId(Optional.of(gcmRegistrationId));
+
+    DirectoryHelper.refreshDirectory(this, accountManager, number);
 
     DirectoryRefreshListener.schedule(this);
   }
@@ -324,28 +291,13 @@ public class RegistrationService extends Service {
     return this.challenge;
   }
 
-  private synchronized String waitForGcmRegistrationId() throws GcmRegistrationTimeoutException {
-    if (this.gcmRegistrationId == null) {
-      try {
-        wait(10 * 60 * 1000);
-      } catch (InterruptedException e) {
-        throw new IllegalArgumentException(e);
-      }
-    }
-
-    if (this.gcmRegistrationId == null)
-      throw new GcmRegistrationTimeoutException();
-
-    return this.gcmRegistrationId;
+  private synchronized void gcmRegistrationReceived(String gcmRegistrationId) {
+      this.gcmRegistrationId = gcmRegistrationId;
+      notifyAll();
   }
 
   public synchronized void challengeReceived(String challenge) {
     this.challenge = challenge;
-    notifyAll();
-  }
-
-  private synchronized void gcmRegistrationReceived(String gcmRegistrationId) {
-    this.gcmRegistrationId = gcmRegistrationId;
     notifyAll();
   }
 
@@ -363,6 +315,7 @@ public class RegistrationService extends Service {
     TextSecurePreferences.setLocalNumber(this, number);
     TextSecurePreferences.setPushServerPassword(this, password);
     TextSecurePreferences.setSignalingKey(this, signalingKey);
+    TextSecurePreferences.setSignedPreKeyRegistered(this, true);
   }
 
   private void setState(RegistrationState state) {
@@ -379,10 +332,10 @@ public class RegistrationService extends Service {
 
     if (success) {
       intent.putExtra(NOTIFICATION_TITLE, getString(R.string.RegistrationService_registration_complete));
-      intent.putExtra(NOTIFICATION_TEXT, getString(R.string.RegistrationService_securecom_messaging_registration_has_successfully_completed));
+      intent.putExtra(NOTIFICATION_TEXT, getString(R.string.RegistrationService_textsecure_registration_has_successfully_completed));
     } else {
       intent.putExtra(NOTIFICATION_TITLE, getString(R.string.RegistrationService_registration_error));
-      intent.putExtra(NOTIFICATION_TEXT, getString(R.string.RegistrationService_securecom_messaging_registration_has_encountered_a_problem));
+      intent.putExtra(NOTIFICATION_TEXT, getString(R.string.RegistrationService_textsecure_registration_has_encountered_a_problem));
     }
 
     this.sendOrderedBroadcast(intent, null);
@@ -395,13 +348,6 @@ public class RegistrationService extends Service {
   public class RegistrationServiceBinder extends Binder {
     public RegistrationService getService() {
       return RegistrationService.this;
-    }
-  }
-
-  private class GcmRegistrationReceiver extends BroadcastReceiver {
-    public void onReceive(Context context, Intent intent) {
-      Log.w("RegistrationService", "Got gcm registration broadcast...");
-      gcmRegistrationReceived(intent.getStringExtra(GCM_REGISTRATION_ID));
     }
   }
 

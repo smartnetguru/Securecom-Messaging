@@ -17,22 +17,22 @@
  */
 package com.securecomcode.messaging.util;
 
+import org.whispersystems.textsecure.internal.push.PushServiceSocket;
+import com.securecomcode.messaging.push.TextSecurePushTrustStore;
+
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
+import android.os.AsyncTask;
 
 import com.securecomcode.messaging.R;
-import com.securecomcode.messaging.push.PushServiceSocketFactory;
+import com.securecomcode.messaging.database.NotInDirectoryException;
+import com.securecomcode.messaging.database.TextSecureDirectory;
+import com.securecomcode.messaging.push.TextSecureCommunicationFactory;
 import com.securecomcode.messaging.recipients.Recipients;
-import com.securecomcode.messaging.recipients.Recipient;
-
-import org.whispersystems.textsecure.directory.Directory;
-import org.whispersystems.textsecure.directory.NotInDirectoryException;
-import org.whispersystems.textsecure.push.ContactTokenDetails;
-import org.whispersystems.textsecure.push.PushServiceSocket;
-import org.whispersystems.textsecure.util.DirectoryUtil;
-import org.whispersystems.textsecure.util.InvalidNumberException;
+import org.whispersystems.textsecure.api.TextSecureAccountManager;
+import org.whispersystems.textsecure.api.push.ContactTokenDetails;
+import org.whispersystems.textsecure.api.util.InvalidNumberException;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -42,68 +42,67 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class DirectoryHelper {
-    private static final String TAG = DirectoryHelper.class.getSimpleName();
+  private static final String TAG = DirectoryHelper.class.getSimpleName();
 
-    public static void refreshDirectoryWithProgressDialog(final Context context) {
-        refreshDirectoryWithProgressDialog(context, null);
+  public static void refreshDirectoryWithProgressDialog(final Context context) {
+    refreshDirectoryWithProgressDialog(context, null);
+  }
+
+  public static void refreshDirectoryWithProgressDialog(final Context context, final DirectoryUpdateFinishedListener listener) {
+    if (!TextSecurePreferences.isPushRegistered(context)) {
+      Toast.makeText(context.getApplicationContext(),
+                     context.getString(R.string.SingleContactSelectionActivity_you_are_not_registered_with_the_push_service),
+                     Toast.LENGTH_LONG).show();
+      return;
     }
 
-    public static void refreshDirectoryWithProgressDialog(final Context context, final DirectoryUpdateFinishedListener listener) {
-        if (!TextSecurePreferences.isPushRegistered(context)) {
-            Toast.makeText(context.getApplicationContext(),
-                    context.getString(R.string.SingleContactSelectionActivity_you_are_not_registered_with_the_push_service),
-                    Toast.LENGTH_LONG).show();
-            return;
-        }
+    new ProgressDialogAsyncTask<Void,Void,Void>(context,
+                                                R.string.SingleContactSelectionActivity_updating_directory,
+                                                R.string.SingleContactSelectionActivity_updating_push_directory)
+    {
+      @Override
+      protected Void doInBackground(Void... voids) {
+        DirectoryHelper.refreshDirectory(context.getApplicationContext());
+        return null;
+      }
 
-        new ProgressDialogAsyncTask<Void, Void, Void>(context,
-                R.string.SingleContactSelectionActivity_updating_directory,
-                R.string.SingleContactSelectionActivity_updating_push_directory) {
-            @Override
-            protected Void doInBackground(Void... voids) {
-                DirectoryHelper.refreshDirectory(context.getApplicationContext());
-                return null;
-            }
+      @Override
+      protected void onPostExecute(Void aVoid) {
+        super.onPostExecute(aVoid);
+        if (listener != null) listener.onUpdateFinished();
+      }
+    }.execute();
 
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                super.onPostExecute(aVoid);
-                if (listener != null) listener.onUpdateFinished();
-            }
-        }.execute();
+  }
 
-    }
+  public static void refreshDirectory(final Context context) {
+    refreshDirectory(context, TextSecureCommunicationFactory.createManager(context));
+  }
 
-    public static void refreshDirectory(final Context context) {
-        refreshDirectory(context, PushServiceSocketFactory.create(context));
-    }
+  public static void refreshDirectory(final Context context, final TextSecureAccountManager accountManager) {
+    refreshDirectory(context, accountManager, TextSecurePreferences.getLocalNumber(context));
+  }
 
-    public static void refreshDirectory(final Context context, final PushServiceSocket socket) {
-        refreshDirectory(context, socket, TextSecurePreferences.getLocalNumber(context));
-    }
-
-    public static void refreshDirectory(final Context context, final PushServiceSocket socket, final String localNumber) {
-        Set<String> eligibleContactNumbers = null;
-        Directory directory = Directory.getInstance(context);
+  public static void refreshDirectory(final Context context, final TextSecureAccountManager accountManager, final String localNumber) {
+    Set<String> eligibleContactNumbers = null;
+    TextSecureDirectory       directory              = TextSecureDirectory.getInstance(context);
         if (TextSecurePreferences.getRegistrationOptionSelected(context).equalsIgnoreCase("Phone")) {
             eligibleContactNumbers = directory.getPushEligibleContactNumbers(localNumber, null);
         } else if (TextSecurePreferences.getRegistrationOptionSelected(context).equalsIgnoreCase("Email")) {
             eligibleContactNumbers = directory.getPushEligibleContactNumbers(localNumber, TextSecurePreferences.getCountryCodeSelected(context));
         }
+    Map<String, String>       tokenMap               = DirectoryUtil.getDirectoryServerTokenMap(eligibleContactNumbers);
+    List<ContactTokenDetails> activeTokens           = accountManager.getContacts(tokenMap.keySet());
 
-        Map<String, String> tokenMap = DirectoryUtil.getDirectoryServerTokenMap(eligibleContactNumbers);
-        List<ContactTokenDetails> activeTokens = socket.retrieveDirectory(tokenMap.keySet());
+    if (activeTokens != null) {
+      for (ContactTokenDetails activeToken : activeTokens) {
+        eligibleContactNumbers.remove(tokenMap.get(activeToken.getToken()));
+        activeToken.setNumber(tokenMap.get(activeToken.getToken()));
+      }
 
-
-        if (activeTokens != null) {
-            for (ContactTokenDetails activeToken : activeTokens) {
-                eligibleContactNumbers.remove(tokenMap.get(activeToken.getToken()));
-                activeToken.setNumber(tokenMap.get(activeToken.getToken()));
-            }
-
-            directory.setNumbers(activeTokens, eligibleContactNumbers);
-        }
+      directory.setNumbers(activeTokens, eligibleContactNumbers);
     }
+  }
 
     public static boolean isPushDestination(Context context, Recipients recipients) {
         String number = "";
@@ -115,37 +114,41 @@ public class DirectoryHelper {
                 return false;
             }
 
-            if (!TextSecurePreferences.isPushRegistered(context)) {
-                return false;
-            }
+      if (!TextSecurePreferences.isPushRegistered(context)) {
+        return false;
+      }
 
-            if (!recipients.isSingleRecipient()) {
-                return false;
-            }
+      if (!recipients.isSingleRecipient()) {
+        return false;
+      }
 
-            if (recipients.isGroupRecipient()) {
-                return true;
-            }
+      if (recipients.isGroupRecipient()) {
+        return true;
+      }
 
             number = recipients.getPrimaryRecipient().getNumber();
 
-            if (number == null) {
-                return false;
-            }
+      if (number == null) {
+        return false;
+      }
 
 
-            if (!org.whispersystems.textsecure.util.Util.isValidEmail(number)) {
+            if (!org.whispersystems.textsecure.internal.util.Util.isValidEmail(number)) {
                 e164number = Util.canonicalizeNumber(context, number);
             } else {
                 e164number = number;
             }
 
-            result = Directory.getInstance(context).isActiveNumber(e164number);
+            result = TextSecureDirectory.getInstance(context).isActiveNumber(e164number);
 
             if (!result) {
-                Directory directory = Directory.getInstance(context);
+                TextSecureDirectory directory = TextSecureDirectory.getInstance(context);
                 try {
-                    final PushServiceSocket socket = PushServiceSocketFactory.create(context);
+                    final PushServiceSocket socket = new PushServiceSocket(com.securecomcode.messaging.Release.PUSH_URL,
+                            new TextSecurePushTrustStore(context),
+                            TextSecurePreferences.getLocalNumber(context),
+                            TextSecurePreferences.getPushServerPassword(context));
+
                     final String contactToken = DirectoryUtil.getDirectoryServerToken(e164number);
                     ContactTokenDetails registeredUser = null;
                     try {
@@ -186,7 +189,7 @@ public class DirectoryHelper {
         }
     }
 
-    public static interface DirectoryUpdateFinishedListener {
-        public void onUpdateFinished();
-    }
+  public static interface DirectoryUpdateFinishedListener {
+    public void onUpdateFinished();
+  }
 }

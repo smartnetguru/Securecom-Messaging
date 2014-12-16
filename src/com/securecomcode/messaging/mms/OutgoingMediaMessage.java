@@ -1,9 +1,9 @@
 package com.securecomcode.messaging.mms;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.securecomcode.messaging.recipients.Recipients;
-import org.whispersystems.textsecure.util.Util;
 
 import ws.com.google.android.mms.pdu.PduBody;
 
@@ -20,7 +20,7 @@ public class OutgoingMediaMessage {
     this.body             = body;
     this.distributionType = distributionType;
 
-    if (!Util.isEmpty(message)) {
+    if (!TextUtils.isEmpty(message)) {
       this.body.addPart(new TextSlide(context, message).getPart());
     }
   }

@@ -17,24 +17,25 @@
  */
 package com.securecomcode.messaging.database;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.securecomcode.messaging.DatabaseUpgradeActivity;
 import com.securecomcode.messaging.crypto.DecryptingPartInputStream;
-import com.securecomcode.messaging.crypto.DecryptingQueue;
-import org.whispersystems.textsecure.crypto.IdentityKey;
-import org.whispersystems.textsecure.crypto.InvalidMessageException;
-import org.whispersystems.textsecure.crypto.MasterCipher;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterCipher;
+import com.securecomcode.messaging.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecretUtil;
 import com.securecomcode.messaging.notifications.MessageNotifier;
-import org.whispersystems.textsecure.storage.Session;
-import org.whispersystems.textsecure.util.Base64;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.util.Base64;
+import com.securecomcode.messaging.util.Util;
+import org.whispersystems.libaxolotl.IdentityKey;
+import org.whispersystems.libaxolotl.InvalidMessageException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,18 +45,20 @@ import ws.com.google.android.mms.ContentType;
 
 public class DatabaseFactory {
 
-  private static final int INTRODUCED_IDENTITIES_VERSION    = 2;
-  private static final int INTRODUCED_INDEXES_VERSION       = 3;
-  private static final int INTRODUCED_DATE_SENT_VERSION     = 4;
-  private static final int INTRODUCED_DRAFTS_VERSION        = 5;
-  private static final int INTRODUCED_NEW_TYPES_VERSION     = 6;
-  private static final int INTRODUCED_MMS_BODY_VERSION      = 7;
-  private static final int INTRODUCED_MMS_FROM_VERSION      = 8;
-  private static final int INTRODUCED_TOFU_IDENTITY_VERSION = 9;
-  private static final int INTRODUCED_PUSH_DATABASE_VERSION = 10;
+  private static final int INTRODUCED_IDENTITIES_VERSION     = 2;
+  private static final int INTRODUCED_INDEXES_VERSION        = 3;
+  private static final int INTRODUCED_DATE_SENT_VERSION      = 4;
+  private static final int INTRODUCED_DRAFTS_VERSION         = 5;
+  private static final int INTRODUCED_NEW_TYPES_VERSION      = 6;
+  private static final int INTRODUCED_MMS_BODY_VERSION       = 7;
+  private static final int INTRODUCED_MMS_FROM_VERSION       = 8;
+  private static final int INTRODUCED_TOFU_IDENTITY_VERSION  = 9;
+  private static final int INTRODUCED_PUSH_DATABASE_VERSION  = 10;
   private static final int INTRODUCED_GROUP_DATABASE_VERSION = 11;
   private static final int INTRODUCED_PUSH_FIX_VERSION       = 12;
-  private static final int DATABASE_VERSION                  = 12;
+  private static final int INTRODUCED_DELIVERY_RECEIPTS      = 13;
+  private static final int DATABASE_VERSION                  = 13;
+
 
   private static final String DATABASE_NAME    = "messages.db";
   private static final Object lock             = new Object();
@@ -289,7 +292,7 @@ public class DatabaseFactory {
             long snippetType = threadCursor.getLong(threadCursor.getColumnIndexOrThrow("snippet_type"));
             long id          = threadCursor.getLong(threadCursor.getColumnIndexOrThrow("_id"));
 
-            if (!Util.isEmpty(snippet)) {
+            if (!TextUtils.isEmpty(snippet)) {
               snippet = masterCipher.decryptBody(snippet);
             }
 
@@ -379,7 +382,7 @@ public class DatabaseFactory {
           }
         }
 
-        if (!Util.isEmpty(body)) {
+        if (!TextUtils.isEmpty(body)) {
           body = masterCipher.encryptBody(body);
           db.execSQL("UPDATE mms SET body = ?, part_count = ? WHERE _id = ?",
                      new String[] {body, partCount+"", mmsId+""});
@@ -403,8 +406,15 @@ public class DatabaseFactory {
             String name = session.getName();
 
             if (name.matches("[0-9]+")) {
-              long recipientId            = Long.parseLong(name);
-              IdentityKey identityKey     = Session.getRemoteIdentityKey(context, masterSecret, recipientId);
+              long        recipientId = Long.parseLong(name);
+              IdentityKey identityKey = null;
+              // NOTE (4/21/14) -- At this moment in time, we're forgetting the ability to parse
+              // V1 session records.  Despite our usual attempts to avoid using shared code in the
+              // upgrade path, this is too complex to put here directly.  Thus, unfortunately
+              // this operation is now lost to the ages.  From the git log, it seems to have been
+              // almost exactly a year since this went in, so hopefully the bulk of people have
+              // already upgraded.
+//              IdentityKey identityKey     = Session.getRemoteIdentityKey(context, masterSecret, recipientId);
 
               if (identityKey != null) {
                 MasterCipher masterCipher = new MasterCipher(masterSecret);
@@ -421,10 +431,45 @@ public class DatabaseFactory {
       }
     }
 
+    if (fromVersion < DatabaseUpgradeActivity.ASYMMETRIC_MASTER_SECRET_FIX_VERSION) {
+      if (!MasterSecretUtil.hasAsymmericMasterSecret(context)) {
+        MasterSecretUtil.generateAsymmetricMasterSecret(context, masterSecret);
+
+        MasterCipher masterCipher = new MasterCipher(masterSecret);
+        Cursor       cursor       = null;
+
+        try {
+          cursor = db.query(SmsDatabase.TABLE_NAME,
+                            new String[] {SmsDatabase.ID, SmsDatabase.BODY, SmsDatabase.TYPE},
+                            SmsDatabase.TYPE + " & ? == 0",
+                            new String[] {String.valueOf(SmsDatabase.Types.ENCRYPTION_MASK)},
+                            null, null, null);
+
+          while (cursor.moveToNext()) {
+            long   id   = cursor.getLong(0);
+            String body = cursor.getString(1);
+            long   type = cursor.getLong(2);
+
+            String encryptedBody = masterCipher.encryptBody(body);
+
+            ContentValues update = new ContentValues();
+            update.put(SmsDatabase.BODY, encryptedBody);
+            update.put(SmsDatabase.TYPE, type | SmsDatabase.Types.ENCRYPTION_SYMMETRIC_BIT);
+
+            db.update(SmsDatabase.TABLE_NAME, update, SmsDatabase.ID  + " = ?",
+                      new String[] {String.valueOf(id)});
+          }
+        } finally {
+          if (cursor != null)
+            cursor.close();
+        }
+      }
+    }
+
     db.setTransactionSuccessful();
     db.endTransaction();
 
-    DecryptingQueue.schedulePendingDecrypts(context, masterSecret);
+//    DecryptingQueue.schedulePendingDecrypts(context, masterSecret);
     MessageNotifier.updateNotification(context, masterSecret);
   }
 
@@ -624,7 +669,7 @@ public class DatabaseFactory {
           long mmsId     = cursor.getLong(cursor.getColumnIndexOrThrow("mms_id"));
           String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
 
-          if (!Util.isEmpty(address)) {
+          if (!TextUtils.isEmpty(address)) {
             db.execSQL("UPDATE mms SET address = ? WHERE _id = ?", new String[]{address, mmsId+""});
           }
         }
@@ -659,6 +704,13 @@ public class DatabaseFactory {
         db.execSQL("CREATE TABLE push (_id INTEGER PRIMARY KEY, type INTEGER, source TEXT, body TEXT, timestamp INTEGER, device_id INTEGER DEFAULT 1);");
         db.execSQL("INSERT INTO push (_id, type, source, body, timestamp, device_id) SELECT _id, type, source, body, timestamp, device_id FROM push_backup;");
         db.execSQL("DROP TABLE push_backup;");
+      }
+
+      if (oldVersion < INTRODUCED_DELIVERY_RECEIPTS) {
+        db.execSQL("ALTER TABLE sms ADD COLUMN delivery_receipt_count INTEGER DEFAULT 0;");
+        db.execSQL("ALTER TABLE mms ADD COLUMN delivery_receipt_count INTEGER DEFAULT 0;");
+        db.execSQL("CREATE INDEX IF NOT EXISTS sms_date_sent_index ON sms (date_sent);");
+        db.execSQL("CREATE INDEX IF NOT EXISTS mms_date_sent_index ON mms (date);");
       }
 
       db.setTransactionSuccessful();

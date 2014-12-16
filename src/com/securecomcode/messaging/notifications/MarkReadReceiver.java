@@ -7,7 +7,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.database.DatabaseFactory;
 
 public class MarkReadReceiver extends BroadcastReceiver {

@@ -23,7 +23,7 @@ import android.util.Patterns;
 import com.securecomcode.messaging.recipients.Recipient.RecipientModifiedListener;
 import com.securecomcode.messaging.util.GroupUtil;
 import com.securecomcode.messaging.util.NumberUtil;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.util.Util;
 
 import java.util.ArrayList;
 import java.util.Iterator;

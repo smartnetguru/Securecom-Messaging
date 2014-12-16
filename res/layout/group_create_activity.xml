@@ -20,8 +20,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <com.securecomcode.messaging.components.ImageDivet
-                android:id="@+id/avatar"
+            <com.securecomcode.messaging.components.ImageDivet android:id="@+id/avatar"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
                 position="bottom_right"
@@ -87,8 +86,7 @@
             </RelativeLayout>
     </RelativeLayout>
 
-    <com.securecomcode.messaging.components.PushRecipientsPanel
-        android:id="@+id/recipients"
+    <com.securecomcode.messaging.components.PushRecipientsPanel android:id="@+id/recipients"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="15dp"

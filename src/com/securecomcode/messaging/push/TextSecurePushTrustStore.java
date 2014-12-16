@@ -3,11 +3,12 @@ package com.securecomcode.messaging.push;
 import android.content.Context;
 
 import com.securecomcode.messaging.R;
-import org.whispersystems.textsecure.push.PushServiceSocket;
+import org.whispersystems.textsecure.api.push.TrustStore;
+import org.whispersystems.textsecure.internal.push.PushServiceSocket;
 
 import java.io.InputStream;
 
-public class TextSecurePushTrustStore implements PushServiceSocket.TrustStore {
+public class TextSecurePushTrustStore implements TrustStore {
 
   private final Context context;
 

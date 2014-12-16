@@ -17,13 +17,11 @@
 package com.securecomcode.messaging.recipients;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.securecomcode.messaging.contacts.ContactPhotoFactory;
 import com.securecomcode.messaging.database.CanonicalAddressDatabase;
-import com.securecomcode.messaging.util.NumberUtil;
-import org.whispersystems.textsecure.push.IncomingPushMessage;
-import org.whispersystems.textsecure.util.Util;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +32,7 @@ public class RecipientFactory {
   private static final RecipientProvider provider = new RecipientProvider();
 
   public static Recipients getRecipientsForIds(Context context, String recipientIds, boolean asynchronous) {
-    if (Util.isEmpty(recipientIds))
+    if (TextUtils.isEmpty(recipientIds))
       return new Recipients(new LinkedList<Recipient>());
 
     List<Recipient> results   = new LinkedList<Recipient>();
@@ -51,7 +49,7 @@ public class RecipientFactory {
   }
 
   private static Recipient getRecipientForNumber(Context context, String number, boolean asynchronous) {
-    long recipientId = CanonicalAddressDatabase.getInstance(context).getCanonicalAddress(number);
+    long recipientId = CanonicalAddressDatabase.getInstance(context).getCanonicalAddressId(number);
     return provider.getRecipient(context, recipientId, asynchronous);
   }
 
@@ -72,18 +70,6 @@ public class RecipientFactory {
     }
 
     return new Recipients(results);
-  }
-
-  public static Recipients getRecipientsFromMessage(Context context,
-                                                    IncomingPushMessage message,
-                                                    boolean asynchronous)
-  {
-    try {
-      return getRecipientsFromString(context, message.getSource(), asynchronous);
-    } catch (RecipientFormattingException e) {
-      Log.w("RecipientFactory", e);
-      return new Recipients(Recipient.getUnknownRecipient(context));
-    }
   }
 
   private static Recipient getRecipientFromProviderId(Context context, String recipientId, boolean asynchronous) {

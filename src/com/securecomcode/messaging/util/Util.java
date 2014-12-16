@@ -19,21 +19,39 @@ package com.securecomcode.messaging.util;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.provider.Telephony;
+import android.telephony.TelephonyManager;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.StyleSpan;
-import android.util.Log;
+import android.widget.EditText;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import com.securecomcode.messaging.R;
 
-import org.whispersystems.textsecure.util.InvalidNumberException;
-import org.whispersystems.textsecure.util.PhoneNumberFormatter;
+import org.whispersystems.textsecure.api.util.PhoneNumberFormatter;
+import org.whispersystems.textsecure.api.util.InvalidNumberException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -43,20 +61,21 @@ import ws.com.google.android.mms.pdu.EncodedStringValue;
 
 public class Util {
 
-  public static String[] splitString(String string, int maxLength) {
-    int count = string.length() / maxLength;
+  static final String VALID_EMAIL_FORMAT = "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+  public static final String NUMBER_FORMAT_HELPER = "5555555555";
 
-    if (string.length() % maxLength > 0)
-      count++;
+  public static String join(Collection<String> list, String delimiter) {
+    StringBuilder result = new StringBuilder();
+    int i=0;
 
-    String[] splitString = new String[count];
+    for (String item : list) {
+      result.append(item);
 
-    for (int i=0;i<count-1;i++)
-      splitString[i] = string.substring(i*maxLength, (i*maxLength) + maxLength);
+      if (++i < list.size())
+        result.append(delimiter);
+    }
 
-    splitString[count-1] = string.substring((count-1) * maxLength);
-
-    return splitString;
+    return result.toString();
   }
 
   public static ExecutorService newSingleThreadedLifoExecutor() {
@@ -77,18 +96,13 @@ public class Util {
     return value == null || value.length == 0;
   }
 
+  public static boolean isEmpty(EditText value) {
+    return value == null || value.getText() == null || TextUtils.isEmpty(value.getText().toString());
+  }
+
   public static CharSequence getBoldedString(String value) {
     SpannableString spanned = new SpannableString(value);
     spanned.setSpan(new StyleSpan(Typeface.BOLD), 0,
-                    spanned.length(),
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-    return spanned;
-  }
-
-  public static CharSequence getItalicizedString(String value) {
-    SpannableString spanned = new SpannableString(value);
-    spanned.setSpan(new StyleSpan(Typeface.ITALIC), 0,
                     spanned.length(),
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
@@ -130,32 +144,113 @@ public class Util {
   public static String canonicalizeNumber(Context context, String number)
       throws InvalidNumberException
   {
-    if(org.whispersystems.textsecure.util.Util.isValidEmail(number)){
+    if(isValidEmail(number)){
         return number;
     }else{
         String localNumber = "";
         if(TextSecurePreferences.getRegistrationOptionSelected(context).equalsIgnoreCase("Email")){
-            localNumber = "+"+TextSecurePreferences.getCountryCodeSelected(context)+ org.whispersystems.textsecure.util.Util.NUMBER_FORMAT_HELPER;
+            localNumber = "+"+TextSecurePreferences.getCountryCodeSelected(context)+ NUMBER_FORMAT_HELPER;
         }else{
             localNumber = TextSecurePreferences.getLocalNumber(context);
         }
 
-        return PhoneNumberFormatter.formatNumber(number, localNumber);
+       return PhoneNumberFormatter.formatNumber(number, localNumber);
     }
+
   }
 
-  public static byte[] readFully(InputStream in) throws IOException {
-    ByteArrayOutputStream baos   = new ByteArrayOutputStream();
-    byte[]                buffer = new byte[4069];
+  public static String canonicalizeNumberOrGroup(Context context, String number)
+      throws InvalidNumberException
+  {
+    if (GroupUtil.isEncodedGroup(number)) return number;
+    else                                  return canonicalizeNumber(context, number);
+  }
 
+  public static String readFully(InputStream in) throws IOException {
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    byte[] buffer              = new byte[4096];
     int read;
 
     while ((read = in.read(buffer)) != -1) {
-      baos.write(buffer, 0, read);
+      bout.write(buffer, 0, read);
     }
 
     in.close();
-    return baos.toByteArray();
+
+    return new String(bout.toByteArray());
+  }
+
+  public static void copy(InputStream in, OutputStream out) throws IOException {
+    byte[] buffer = new byte[4096];
+    int read;
+
+    while ((read = in.read(buffer)) != -1) {
+      out.write(buffer, 0, read);
+    }
+
+    in.close();
+    out.close();
+  }
+
+  public static String getDeviceE164Number(Context context) {
+    String localNumber = ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE))
+        .getLine1Number();
+
+    if (!TextUtils.isEmpty(localNumber) && !localNumber.startsWith("+"))
+    {
+      if (localNumber.length() == 10) localNumber = "+1" + localNumber;
+      else                            localNumber = "+"  + localNumber;
+
+      return localNumber;
+    }
+
+    return null;
+  }
+
+  public static List<String> split(String source, String delimiter) {
+    List<String> results = new LinkedList<>();
+
+    if (TextUtils.isEmpty(source)) {
+      return results;
+    }
+
+    String[] elements = source.split(delimiter);
+    Collections.addAll(results, elements);
+
+    return results;
+  }
+
+  public static byte[][] split(byte[] input, int firstLength, int secondLength) {
+    byte[][] parts = new byte[2][];
+
+    parts[0] = new byte[firstLength];
+    System.arraycopy(input, 0, parts[0], 0, firstLength);
+
+    parts[1] = new byte[secondLength];
+    System.arraycopy(input, firstLength, parts[1], 0, secondLength);
+
+    return parts;
+  }
+
+  public static byte[] combine(byte[]... elements) {
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      for (byte[] element : elements) {
+        baos.write(element);
+      }
+
+      return baos.toByteArray();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public static byte[] trim(byte[] input, int length) {
+    byte[] result = new byte[length];
+    System.arraycopy(input, 0, result, 0, result.length);
+
+    return result;
   }
 
   @SuppressLint("NewApi")
@@ -164,28 +259,74 @@ public class Util {
       (context.getPackageName().equals(Telephony.Sms.getDefaultSmsPackage(context)));
   }
 
-  //  public static Bitmap loadScaledBitmap(InputStream src, int targetWidth, int targetHeight) {
-  //    return BitmapFactory.decodeStream(src);
-  ////  BitmapFactory.Options options = new BitmapFactory.Options();
-  ////  options.inJustDecodeBounds    = true;
-  ////  BitmapFactory.decodeStream(src, null, options);
-  ////
-  ////  Log.w("Util", "Bitmap Origin Width: " + options.outWidth);
-  ////  Log.w("Util", "Bitmap Origin Height: " + options.outHeight);
-  ////
-  ////  boolean scaleByHeight =
-  ////    Math.abs(options.outHeight - targetHeight) >=
-  ////    Math.abs(options.outWidth - targetWidth);
-  ////
-  ////  if (options.outHeight * options.outWidth >= targetWidth * targetHeight * 2) {
-  ////    double sampleSize = scaleByHeight ? (double)options.outHeight / (double)targetHeight : (double)options.outWidth / (double)targetWidth;
-  //////    options.inSampleSize = (int)Math.pow(2d, Math.floor(Math.log(sampleSize) / Math.log(2d)));
-  ////    Log.w("Util", "Sampling by: " + options.inSampleSize);
-  ////  }
-  ////
-  ////  options.inJustDecodeBounds = false;
-  ////
-  ////  return BitmapFactory.decodeStream(src, null, options);
-  //  }
+  public static int getCurrentApkReleaseVersion(Context context) {
+    try {
+      return context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
+    } catch (PackageManager.NameNotFoundException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public static String getSecret(int size) {
+    byte[] secret = getSecretBytes(size);
+    return Base64.encodeBytes(secret);
+  }
+
+  public static byte[] getSecretBytes(int size) {
+    byte[] secret = new byte[size];
+    getSecureRandom().nextBytes(secret);
+    return secret;
+  }
+
+  public static SecureRandom getSecureRandom() {
+    try {
+      return SecureRandom.getInstance("SHA1PRNG");
+    } catch (NoSuchAlgorithmException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+
+  /*
+   * source: http://stackoverflow.com/a/9500334
+   */
+  public static void fixBackgroundRepeat(Drawable bg) {
+    if (bg != null) {
+      if (bg instanceof BitmapDrawable) {
+        BitmapDrawable bmp = (BitmapDrawable) bg;
+        bmp.mutate();
+        bmp.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+      }
+    }
+  }
+
+    public static boolean isValidEmail(String email){
+        return email.trim().matches(VALID_EMAIL_FORMAT);
+    }
+
+    public static boolean showAlertOnNoData(Context context){
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        boolean result = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if(!result){
+            AlertDialog.Builder ad = new AlertDialog.Builder(context);
+            ad.setTitle(context.getResources().getText(R.string.Warning_title_cellular_data_is_turned_off));
+            ad.setMessage(context.getResources().getText(R.string.Warning_turn_on_packet_data_or_use_wi_fi_to_complete_this_action));
+            ad.setCancelable(false);
+            ad.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int arg) {
+
+                }
+            });
+            ad.show();
+        }
+
+        return result;
+    }
 
 }

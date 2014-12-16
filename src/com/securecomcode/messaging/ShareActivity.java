@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2014 Open Whisper Systems
- * Copyright (C) 2014 Securecom
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,27 +19,23 @@ package com.securecomcode.messaging;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.view.WindowManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.recipients.Recipients;
 import com.securecomcode.messaging.util.DynamicLanguage;
 import com.securecomcode.messaging.util.DynamicTheme;
 import com.securecomcode.messaging.util.MemoryCleaner;
-import com.securecomcode.messaging.util.TextSecurePreferences;
-import org.whispersystems.textsecure.crypto.MasterSecret;
 
 /**
  * An activity to quickly share content with contacts
  *
  * @author Jake McGinty
  */
-public class ShareActivity extends PassphraseRequiredSherlockFragmentActivity
+public class ShareActivity extends PassphraseRequiredActionBarActivity
     implements ShareFragment.ConversationSelectedListener
   {
   public final static String MASTER_SECRET_EXTRA = "master_secret";
@@ -89,7 +84,7 @@ public class ShareActivity extends PassphraseRequiredSherlockFragmentActivity
 
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
-    MenuInflater inflater = this.getSupportMenuInflater();
+    MenuInflater inflater = this.getMenuInflater();
     menu.clear();
 
     inflater.inflate(R.menu.share, menu);
@@ -154,7 +149,7 @@ public class ShareActivity extends PassphraseRequiredSherlockFragmentActivity
     intent.putExtra(ConversationActivity.DRAFT_IMAGE_EXTRA, draftImage);
     intent.putExtra(ConversationActivity.DRAFT_AUDIO_EXTRA, draftAudio);
     intent.putExtra(ConversationActivity.DRAFT_VIDEO_EXTRA, draftVideo);
-    intent.putExtra(ConversationActivity.DRAFT_OTHER_EXTRA, draftVideo);
+    intent.putExtra(ConversationActivity.DRAFT_OTHER_EXTRA, draftOther);
     intent.putExtra(NewConversationActivity.MASTER_SECRET_EXTRA, masterSecret);
 
     return intent;

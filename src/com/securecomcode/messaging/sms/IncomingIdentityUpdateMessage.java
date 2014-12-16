@@ -1,7 +1,7 @@
 package com.securecomcode.messaging.sms;
 
-import org.whispersystems.textsecure.crypto.IdentityKey;
-import org.whispersystems.textsecure.util.Base64;
+import com.securecomcode.messaging.util.Base64;
+import org.whispersystems.libaxolotl.IdentityKey;
 
 public class IncomingIdentityUpdateMessage extends IncomingKeyExchangeMessage {
 

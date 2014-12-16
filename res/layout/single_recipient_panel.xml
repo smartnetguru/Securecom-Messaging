@@ -6,8 +6,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" >
 
-        <com.securecomcode.messaging.contacts.RecipientsEditor
-            android:id="@+id/recipients_text"
+        <com.securecomcode.messaging.contacts.RecipientsEditor android:id="@+id/recipients_text"
            android:layout_height="wrap_content"
             android:capitalize="sentences"
             android:autoText="true"

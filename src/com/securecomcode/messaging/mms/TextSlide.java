@@ -20,7 +20,11 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.util.SmilUtil;
+import org.w3c.dom.smil.SMILDocument;
+import org.w3c.dom.smil.SMILMediaElement;
+import org.w3c.dom.smil.SMILRegionElement;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.util.LRUCache;
 
 import java.io.UnsupportedEncodingException;
@@ -74,7 +78,24 @@ public class TextSlide extends Slide {
       return new String(getPartData());
     }
   }
-	
+
+  @Override
+  public SMILRegionElement getSmilRegion(SMILDocument document) {
+    SMILRegionElement region = (SMILRegionElement) document.createElement("region");
+    region.setId("Text");
+    region.setLeft(0);
+    region.setTop(SmilUtil.ROOT_HEIGHT);
+    region.setWidth(SmilUtil.ROOT_WIDTH);
+    region.setHeight(50);
+    region.setFit("meet");
+    return region;
+  }
+
+  @Override
+  public SMILMediaElement getMediaElement(SMILDocument document) {
+    return SmilUtil.createMediaElement("text", document, new String(getPart().getName()));
+  }
+
   private static PduPart getPartForMessage(String message) {
     PduPart part = new PduPart();
 

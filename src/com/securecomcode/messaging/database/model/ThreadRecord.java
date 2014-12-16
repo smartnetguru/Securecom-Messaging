@@ -19,6 +19,7 @@ package com.securecomcode.messaging.database.model;
 import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.StyleSpan;
 
 import com.securecomcode.messaging.R;
@@ -26,7 +27,6 @@ import com.securecomcode.messaging.database.MmsSmsColumns;
 import com.securecomcode.messaging.database.SmsDatabase;
 import com.securecomcode.messaging.recipients.Recipients;
 import com.securecomcode.messaging.util.GroupUtil;
-import org.whispersystems.textsecure.util.Util;
 
 /**
  * The message record model which represents thread heading messages.
@@ -73,7 +73,7 @@ public class ThreadRecord extends DisplayRecord {
     } else if (MmsSmsColumns.Types.isLegacyType(type)) {
       return emphasisAdded(context.getString(R.string.MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported));
     } else {
-      if (Util.isEmpty(getBody().getBody())) {
+      if (TextUtils.isEmpty(getBody().getBody())) {
         return new SpannableString(context.getString(R.string.MessageNotifier_no_subject));
       } else {
         return new SpannableString(getBody().getBody());

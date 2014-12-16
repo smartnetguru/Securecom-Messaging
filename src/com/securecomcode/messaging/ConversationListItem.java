@@ -38,7 +38,6 @@ import android.widget.TextView;
 import com.securecomcode.messaging.database.model.ThreadRecord;
 import com.securecomcode.messaging.recipients.Recipient;
 import com.securecomcode.messaging.recipients.Recipients;
-
 import com.securecomcode.messaging.util.DateUtils;
 import com.securecomcode.messaging.util.Emoji;
 
@@ -103,13 +102,10 @@ public class ConversationListItem extends RelativeLayout
     this.recipients.addListener(this);
     this.fromView.setText(formatFrom(recipients, count, read));
 
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
       this.subjectView.setText(Emoji.getInstance(context).emojify(thread.getDisplayBody(),
-                                                                  Emoji.EMOJI_SMALL),
+                                                                  Emoji.EMOJI_SMALL,
+                                                                  new Emoji.InvalidatingPageLoadedListener(subjectView)),
                                TextView.BufferType.SPANNABLE);
-    } else {
-      this.subjectView.setText(thread.getDisplayBody());
-    }
 
     if (thread.getDate() > 0)
       this.dateView.setText(DateUtils.getBetterRelativeTimeSpanString(getContext(), thread.getDate()));

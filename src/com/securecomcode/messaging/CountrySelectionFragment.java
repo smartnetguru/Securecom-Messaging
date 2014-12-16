@@ -2,6 +2,7 @@ package com.securecomcode.messaging;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.text.Editable;
@@ -13,13 +14,13 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
-import com.actionbarsherlock.app.SherlockListFragment;
+
 import com.securecomcode.messaging.database.loaders.CountryListLoader;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-public class CountrySelectionFragment extends SherlockListFragment implements LoaderManager.LoaderCallbacks<ArrayList<Map<String, String>>> {
+public class CountrySelectionFragment extends ListFragment implements LoaderManager.LoaderCallbacks<ArrayList<Map<String, String>>> {
 
   private EditText countryFilter;
   private CountrySelectedListener listener;

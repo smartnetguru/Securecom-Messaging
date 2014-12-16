@@ -4,7 +4,7 @@ package com.securecomcode.messaging.database;
 import android.content.Context;
 import android.os.Environment;
 
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.database.model.SmsMessageRecord;
 
 import java.io.File;

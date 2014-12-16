@@ -19,7 +19,7 @@ import android.util.Log;
 
 import com.securecomcode.messaging.R;
 import com.securecomcode.messaging.RoutingActivity;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.database.SmsMigrator;
 import com.securecomcode.messaging.database.SmsMigrator.ProgressDescription;
 

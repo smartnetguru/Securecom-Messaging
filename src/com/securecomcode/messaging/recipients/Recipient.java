@@ -26,14 +26,12 @@ import android.util.Log;
 import com.securecomcode.messaging.contacts.ContactPhotoFactory;
 import com.securecomcode.messaging.recipients.RecipientProvider.RecipientDetails;
 import com.securecomcode.messaging.util.GroupUtil;
-import com.securecomcode.messaging.util.BitmapUtil;
-import org.whispersystems.textsecure.storage.CanonicalRecipient;
-import org.whispersystems.textsecure.util.FutureTaskListener;
-import org.whispersystems.textsecure.util.ListenableFutureTask;
+import com.securecomcode.messaging.util.FutureTaskListener;
+import com.securecomcode.messaging.util.ListenableFutureTask;
 
 import java.util.HashSet;
 
-public class Recipient implements Parcelable, CanonicalRecipient {
+public class Recipient implements Parcelable {
 
   private final static String TAG = Recipient.class.getSimpleName();
 
@@ -49,9 +47,9 @@ public class Recipient implements Parcelable, CanonicalRecipient {
 
   private final HashSet<RecipientModifiedListener> listeners = new HashSet<RecipientModifiedListener>();
 
-  private final String number;
-  private final long   recipientId;
+  private final long recipientId;
 
+  private String number;
   private String name;
 
   private Bitmap contactPhoto;
@@ -67,7 +65,7 @@ public class Recipient implements Parcelable, CanonicalRecipient {
     this.contactPhoto               = contactPhoto;
     this.recipientId                = recipientId;
 
-    future.setListener(new FutureTaskListener<RecipientDetails>() {
+    future.addListener(new FutureTaskListener<RecipientDetails>() {
       @Override
       public void onSuccess(RecipientDetails result) {
         if (result != null) {
@@ -75,6 +73,7 @@ public class Recipient implements Parcelable, CanonicalRecipient {
 
           synchronized (Recipient.this) {
             Recipient.this.name                      = result.name;
+            Recipient.this.number                    = result.number;
             Recipient.this.contactUri                = result.contactUri;
             Recipient.this.contactPhoto              = result.avatar;
             Recipient.this.circleCroppedContactPhoto = result.croppedAvatar;

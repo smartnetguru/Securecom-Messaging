@@ -22,13 +22,17 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
-
+import org.w3c.dom.smil.SMILDocument;
+import org.w3c.dom.smil.SMILRegionElement;
+import org.w3c.dom.smil.SMILMediaElement;
+import com.securecomcode.messaging.util.SmilUtil;
 import com.securecomcode.messaging.R;
 
 import ws.com.google.android.mms.ContentType;
 import ws.com.google.android.mms.pdu.PduPart;
 
 import java.io.IOException;
+import java.lang.Exception;
 
 
 public class OtherSlide extends Slide {
@@ -40,6 +44,7 @@ public class OtherSlide extends Slide {
 
     public OtherSlide(Context context, Uri uri) throws IOException, MediaTooLargeException {
         super(context, constructPartFromUri(context, uri));
+
     }
 
     @Override
@@ -80,11 +85,30 @@ public class OtherSlide extends Slide {
         } else {
             part.setContentType(type.getBytes());
         }
+
         part.setDataUri(uri);
         part.setContentId((System.currentTimeMillis() + "").getBytes());
         part.setName(("Other" + System.currentTimeMillis()).getBytes());
 
         return part;
     }
+
+    @Override
+    public SMILRegionElement getSmilRegion(SMILDocument document) {
+        SMILRegionElement region = (SMILRegionElement) document.createElement("region");
+        region.setId("Image");
+        region.setLeft(0);
+        region.setTop(0);
+        region.setWidth(SmilUtil.ROOT_WIDTH);
+        region.setHeight(SmilUtil.ROOT_HEIGHT);
+        region.setFit("meet");
+        return region;
+    }
+
+    @Override
+    public SMILMediaElement getMediaElement(SMILDocument document) {
+        return SmilUtil.createMediaElement("other", document, new String(getPart().getName()));
+    }
+
 
 }

@@ -26,7 +26,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
-import com.securecomcode.messaging.providers.SecurecomMessagingPartProvider;
+import com.securecomcode.messaging.providers.PartProvider;
 import com.securecomcode.messaging.util.Util;
 
 import java.io.ByteArrayInputStream;
@@ -248,7 +248,7 @@ public class PartDatabase extends Database {
     getPartValues(part, cursor);
     if (includeData && !part.isPendingPush())
       readPartData(part, dataLocation);
-    part.setDataUri(ContentUris.withAppendedId(SecurecomMessagingPartProvider.CONTENT_URI, partId));
+    part.setDataUri(ContentUris.withAppendedId(PartProvider.CONTENT_URI, partId));
 
     return part;
   }

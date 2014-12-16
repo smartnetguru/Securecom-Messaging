@@ -29,6 +29,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.securecomcode.messaging.R;
+import com.securecomcode.messaging.contacts.ContactAccessor;
 import com.securecomcode.messaging.contacts.RecipientsAdapter;
 import com.securecomcode.messaging.contacts.RecipientsEditor;
 import com.securecomcode.messaging.recipients.Recipient;

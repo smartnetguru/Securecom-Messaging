@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.thoughtcrime.securesms.components;
+package com.securecomcode.messaging.components;
 
 import android.content.Context;
 import android.os.Build;

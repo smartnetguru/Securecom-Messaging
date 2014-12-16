@@ -22,7 +22,7 @@ import android.util.Log;
 
 import com.securecomcode.messaging.crypto.DecryptingPartInputStream;
 import com.securecomcode.messaging.crypto.EncryptingPartOutputStream;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
 import ws.com.google.android.mms.pdu.PduPart;
 

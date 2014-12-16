@@ -25,10 +25,10 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.ImageView;
 
+import com.securecomcode.messaging.R;
 import com.securecomcode.messaging.recipients.Recipient;
 import com.securecomcode.messaging.recipients.RecipientFactory;
 import com.securecomcode.messaging.recipients.RecipientFormattingException;
-import com.securecomcode.messaging.R;
 
 import java.lang.ref.WeakReference;
 

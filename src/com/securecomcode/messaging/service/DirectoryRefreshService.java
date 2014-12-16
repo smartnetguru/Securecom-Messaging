@@ -8,7 +8,6 @@ import android.os.PowerManager;
 import android.util.Log;
 
 import com.securecomcode.messaging.util.DirectoryHelper;
-import com.securecomcode.messaging.push.PushServiceSocketFactory;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;

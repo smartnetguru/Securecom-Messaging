@@ -24,8 +24,8 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.CursorAdapter;
 
-import org.whispersystems.textsecure.crypto.MasterCipher;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterCipher;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.database.DatabaseFactory;
 import com.securecomcode.messaging.database.ThreadDatabase;
 import com.securecomcode.messaging.database.model.ThreadRecord;

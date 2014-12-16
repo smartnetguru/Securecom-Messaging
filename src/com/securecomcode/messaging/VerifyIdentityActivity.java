@@ -21,14 +21,18 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.securecomcode.messaging.crypto.IdentityKeyParcelable;
 import com.securecomcode.messaging.crypto.IdentityKeyUtil;
+import com.securecomcode.messaging.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.storage.TextSecureSessionStore;
 import com.securecomcode.messaging.recipients.Recipient;
 import com.securecomcode.messaging.util.DynamicLanguage;
 import com.securecomcode.messaging.util.DynamicTheme;
 import com.securecomcode.messaging.util.MemoryCleaner;
-import org.whispersystems.textsecure.crypto.IdentityKey;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.storage.Session;
+import org.whispersystems.libaxolotl.IdentityKey;
+import org.whispersystems.libaxolotl.state.SessionRecord;
+import org.whispersystems.libaxolotl.state.SessionStore;
+import org.whispersystems.textsecure.api.push.PushAddress;
 
 /**
  * Activity for verifying identity keys.
@@ -83,10 +87,15 @@ public class VerifyIdentityActivity extends KeyScanningActivity {
   }
 
   private void initializeRemoteIdentityKey() {
-    IdentityKey identityKey = getIntent().getParcelableExtra("remote_identity");
+    IdentityKeyParcelable identityKeyParcelable = getIntent().getParcelableExtra("remote_identity");
+    IdentityKey           identityKey           = null;
+
+    if (identityKeyParcelable != null) {
+      identityKey = identityKeyParcelable.get();
+    }
 
     if (identityKey == null) {
-      identityKey = Session.getRemoteIdentityKey(this, masterSecret, recipient);
+      identityKey = getRemoteIdentityKey(masterSecret, recipient);
     }
 
     if (identityKey == null) {
@@ -122,7 +131,7 @@ public class VerifyIdentityActivity extends KeyScanningActivity {
 
   @Override
   protected void initiateScan() {
-    IdentityKey identityKey = Session.getRemoteIdentityKey(this, masterSecret, recipient);
+    IdentityKey identityKey = getRemoteIdentityKey(masterSecret, recipient);
 
     if (identityKey == null) {
       Toast.makeText(this, R.string.VerifyIdentityActivity_recipient_has_no_identity_key_exclamation,
@@ -144,7 +153,7 @@ public class VerifyIdentityActivity extends KeyScanningActivity {
 
   @Override
   protected IdentityKey getIdentityKeyToCompare() {
-    return Session.getRemoteIdentityKey(this, masterSecret, recipient);
+    return getRemoteIdentityKey(masterSecret, recipient);
   }
 
   @Override
@@ -170,5 +179,17 @@ public class VerifyIdentityActivity extends KeyScanningActivity {
   @Override
   protected String getVerifiedTitle() {
     return getString(R.string.VerifyIdentityActivity_verified_exclamation);
+  }
+
+  private IdentityKey getRemoteIdentityKey(MasterSecret masterSecret, Recipient recipient) {
+    SessionStore  sessionStore = new TextSecureSessionStore(this, masterSecret);
+    SessionRecord record       = sessionStore.loadSession(recipient.getRecipientId(),
+                                                          PushAddress.DEFAULT_DEVICE_ID);
+
+    if (record == null) {
+      return null;
+    }
+
+    return record.getSessionState().getRemoteIdentityKey();
   }
 }

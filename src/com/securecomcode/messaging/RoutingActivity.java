@@ -18,29 +18,26 @@
 package com.securecomcode.messaging;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.webkit.MimeTypeMap;
+import android.util.Log;
 
-import com.google.android.gcm.GCMRegistrar;
 import com.securecomcode.messaging.crypto.MasterSecretUtil;
 import com.securecomcode.messaging.database.DatabaseFactory;
 import com.securecomcode.messaging.recipients.RecipientFactory;
 import com.securecomcode.messaging.recipients.RecipientFormattingException;
 import com.securecomcode.messaging.recipients.Recipients;
-import com.securecomcode.messaging.service.ApplicationMigrationService;
 import com.securecomcode.messaging.util.TextSecurePreferences;
-import org.whispersystems.textsecure.crypto.MasterSecret;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
-public class RoutingActivity extends PassphraseRequiredSherlockActivity {
+public class RoutingActivity extends PassphraseRequiredActionBarActivity {
 
   private static final int STATE_CREATE_PASSPHRASE        = 1;
   private static final int STATE_PROMPT_PASSPHRASE        = 2;
-  private static final int STATE_IMPORT_DATABASE          = 3;
-  private static final int STATE_CONVERSATION_OR_LIST     = 4;
-  private static final int STATE_UPGRADE_DATABASE         = 5;
-  private static final int STATE_PROMPT_PUSH_REGISTRATION = 6;
+
+  private static final int STATE_CONVERSATION_OR_LIST     = 3;
+  private static final int STATE_UPGRADE_DATABASE         = 4;
+  private static final int STATE_PROMPT_PUSH_REGISTRATION = 5;
 
   private MasterSecret masterSecret   = null;
   private boolean      isVisible      = false;
@@ -103,7 +100,6 @@ public class RoutingActivity extends PassphraseRequiredSherlockActivity {
     switch (state) {
     case STATE_CREATE_PASSPHRASE:        handleCreatePassphrase();          break;
     case STATE_PROMPT_PASSPHRASE:        handlePromptPassphrase();          break;
-    case STATE_IMPORT_DATABASE:          handleImportDatabase();            break;
     case STATE_CONVERSATION_OR_LIST:     handleDisplayConversationOrList(); break;
     case STATE_UPGRADE_DATABASE:         handleUpgradeDatabase();           break;
     case STATE_PROMPT_PUSH_REGISTRATION: handlePushRegistration();          break;
@@ -118,15 +114,6 @@ public class RoutingActivity extends PassphraseRequiredSherlockActivity {
   private void handlePromptPassphrase() {
     Intent intent = new Intent(this, PassphrasePromptActivity.class);
     startActivityForResult(intent, 2);
-  }
-
-  private void handleImportDatabase() {
-    Intent intent = new Intent(this, DatabaseMigrationActivity.class);
-    intent.putExtra("master_secret", masterSecret);
-    intent.putExtra("next_intent", getPushRegistrationIntent());
-
-    startActivity(intent);
-    finish();
   }
 
   private void handleUpgradeDatabase() {
@@ -148,15 +135,12 @@ public class RoutingActivity extends PassphraseRequiredSherlockActivity {
 
   private void handleDisplayConversationOrList() {
     final ConversationParameters parameters = getConversationParameters();
-
     final Intent intent;
-    if (isShareAction()) {
-      intent = getShareIntent(parameters);
-    } else if (parameters.recipients != null) {
-      intent = getConversationIntent(parameters);
-    } else {
-      intent = getConversationListIntent();
-    }
+
+    if      (isShareAction())               intent = getShareIntent(parameters);
+    else if (parameters.recipients != null) intent = getConversationIntent(parameters);
+    else                                    intent = getConversationListIntent();
+
     startActivity(intent);
     finish();
   }
@@ -211,13 +195,9 @@ public class RoutingActivity extends PassphraseRequiredSherlockActivity {
     if (masterSecret == null)
       return STATE_PROMPT_PASSPHRASE;
 
-    if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY) && Util.isAndroidPhone()) {
-        if (!ApplicationMigrationService.isDatabaseImported(this))
-            return STATE_IMPORT_DATABASE;
+    if (DatabaseUpgradeActivity.isUpdate(this))
+      return STATE_UPGRADE_DATABASE;
 
-        if (DatabaseUpgradeActivity.isUpdate(this))
-            return STATE_UPGRADE_DATABASE;
-    }
     if (!TextSecurePreferences.hasPromptedPushRegistration(this))
       return STATE_PROMPT_PUSH_REGISTRATION;
 
@@ -251,7 +231,7 @@ public class RoutingActivity extends PassphraseRequiredSherlockActivity {
 
   private ConversationParameters getConversationParametersForShareAction() {
     String type      = getIntent().getType();
-    String draftText = null;
+    String draftText = getIntent().getStringExtra(Intent.EXTRA_TEXT);
     Uri draftImage   = null;
     Uri draftAudio   = null;
     Uri draftVideo   = null;

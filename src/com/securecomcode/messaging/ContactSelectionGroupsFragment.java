@@ -19,6 +19,7 @@ package com.securecomcode.messaging;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
@@ -29,8 +30,6 @@ import android.widget.CheckedTextView;
 import android.widget.CursorAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-
-import com.actionbarsherlock.app.SherlockListFragment;
 
 import com.securecomcode.messaging.contacts.ContactAccessor;
 import com.securecomcode.messaging.contacts.ContactAccessor.ContactData;
@@ -51,7 +50,7 @@ import java.util.List;
  * @author Moxie Marlinspike
  *
  */
-public class ContactSelectionGroupsFragment extends SherlockListFragment
+public class ContactSelectionGroupsFragment extends ListFragment
     implements LoaderManager.LoaderCallbacks<Cursor>
 {
 

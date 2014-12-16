@@ -18,7 +18,7 @@ public class QuickResponseService extends Service {
     }
 
     Toast.makeText(this,
-                   getString(R.string.QuickResponseService_sorry_quick_response_is_not_yet_supported_by_securecom_messaging),
+                   getString(R.string.QuickResponseService_sorry_quick_response_is_not_yet_supported_by_textsecure),
                    Toast.LENGTH_LONG).show();
 
     return START_NOT_STICKY;

@@ -19,6 +19,7 @@ package com.securecomcode.messaging;
 import android.app.Activity;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
@@ -27,18 +28,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
-import com.actionbarsherlock.app.SherlockListFragment;
 
 import com.securecomcode.messaging.database.loaders.ConversationListLoader;
 import com.securecomcode.messaging.recipients.Recipients;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 
 /**
  * A fragment to select and share to open conversations
  *
  * @author Jake McGinty
  */
-public class ShareFragment extends SherlockListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ShareFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
   private ConversationSelectedListener listener;
   private MasterSecret masterSecret;

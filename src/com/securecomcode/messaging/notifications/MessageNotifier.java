@@ -39,18 +39,17 @@ import android.util.Log;
 
 import com.securecomcode.messaging.R;
 import com.securecomcode.messaging.RoutingActivity;
-import com.securecomcode.messaging.contacts.ContactPhotoFactory;
-import com.securecomcode.messaging.database.PushDatabase;
-import com.securecomcode.messaging.recipients.RecipientFactory;
-import com.securecomcode.messaging.recipients.RecipientFormattingException;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.database.DatabaseFactory;
 import com.securecomcode.messaging.database.MmsSmsDatabase;
+import com.securecomcode.messaging.database.PushDatabase;
 import com.securecomcode.messaging.database.model.MessageRecord;
 import com.securecomcode.messaging.recipients.Recipient;
+import com.securecomcode.messaging.recipients.RecipientFactory;
+import com.securecomcode.messaging.recipients.RecipientFormattingException;
 import com.securecomcode.messaging.recipients.Recipients;
 import com.securecomcode.messaging.util.TextSecurePreferences;
-import org.whispersystems.textsecure.push.IncomingPushMessage;
+import org.whispersystems.textsecure.api.messages.TextSecureEnvelope;
 
 import java.io.IOException;
 import java.util.List;
@@ -172,6 +171,7 @@ public class MessageNotifier {
     builder.setContentText(notifications.get(0).getText());
     builder.setContentIntent(notifications.get(0).getPendingIntent(context));
     builder.setContentInfo(String.valueOf(notificationState.getMessageCount()));
+    builder.setNumber(notificationState.getMessageCount());
 
     if (masterSecret != null) {
       builder.addAction(R.drawable.check, context.getString(R.string.MessageNotifier_mark_as_read),
@@ -215,6 +215,7 @@ public class MessageNotifier {
     builder.setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, RoutingActivity.class), 0));
     
     builder.setContentInfo(String.valueOf(notificationState.getMessageCount()));
+    builder.setNumber(notificationState.getMessageCount());
 
     if (masterSecret != null) {
       builder.addAction(R.drawable.check, context.getString(R.string.MessageNotifier_mark_all_as_read),
@@ -284,24 +285,24 @@ public class MessageNotifier {
     if (masterSecret != null) return;
 
     PushDatabase.Reader reader = null;
-    IncomingPushMessage message;
+    TextSecureEnvelope envelope;
 
     try {
       reader = DatabaseFactory.getPushDatabase(context).readerFor(cursor);
 
-      while ((message = reader.getNext()) != null) {
-        Recipient recipient;
+      while ((envelope = reader.getNext()) != null) {
+        Recipients recipients;
 
         try {
-          recipient = RecipientFactory.getRecipientsFromString(context, message.getSource(), false).getPrimaryRecipient();
+          recipients = RecipientFactory.getRecipientsFromString(context, envelope.getSource(), false);
         } catch (RecipientFormattingException e) {
           Log.w("MessageNotifier", e);
-          recipient = Recipient.getUnknownRecipient(context);
+          recipients = new Recipients(Recipient.getUnknownRecipient(context));
         }
 
-        Recipients      recipients = RecipientFactory.getRecipientsFromMessage(context, message, false);
-        long            threadId   = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipients);
-        SpannableString body       = new SpannableString(context.getString(R.string.MessageNotifier_encrypted_message));
+        Recipient       recipient = recipients.getPrimaryRecipient();
+        long            threadId  = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipients);
+        SpannableString body      = new SpannableString(context.getString(R.string.MessageNotifier_encrypted_message));
         body.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), 0, body.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         notificationState.addNotification(new NotificationItem(recipient, recipients, null, threadId, body, null));

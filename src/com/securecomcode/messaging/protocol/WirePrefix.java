@@ -16,7 +16,8 @@
  */
 package com.securecomcode.messaging.protocol;
 
-import org.whispersystems.textsecure.util.Base64;
+
+import com.securecomcode.messaging.util.Base64;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

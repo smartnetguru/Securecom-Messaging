@@ -6,8 +6,8 @@ import android.database.sqlite.SQLiteStatement;
 import android.os.Environment;
 import android.util.Log;
 
-import org.whispersystems.textsecure.crypto.MasterCipher;
-import org.whispersystems.textsecure.crypto.MasterSecret;
+import com.securecomcode.messaging.crypto.MasterCipher;
+import com.securecomcode.messaging.crypto.MasterSecret;
 import com.securecomcode.messaging.recipients.RecipientFactory;
 import com.securecomcode.messaging.recipients.RecipientFormattingException;
 import com.securecomcode.messaging.recipients.Recipients;

@@ -17,9 +17,14 @@
  */
 package com.securecomcode.messaging.contacts;
 
+import org.whispersystems.libaxolotl.IdentityKey;
+import org.whispersystems.libaxolotl.InvalidKeyException;
+import com.securecomcode.messaging.util.Util;
+import com.securecomcode.messaging.util.Base64;
+
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.net.Uri;
@@ -34,26 +39,21 @@ import android.provider.ContactsContract.PhoneLookup;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.telephony.PhoneNumberUtils;
-import android.util.Log;
 
-import org.whispersystems.textsecure.crypto.IdentityKey;
-import org.whispersystems.textsecure.crypto.InvalidKeyException;
-import org.whispersystems.textsecure.directory.Directory;
-import org.whispersystems.textsecure.util.Base64;
-import org.whispersystems.textsecure.util.Util;
+import com.securecomcode.messaging.database.TextSecureDirectory;
 
-import java.io.IOException;
-import java.lang.Long;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.io.IOException;
+import android.util.Log;
 
 /**
  * This class was originally a layer of indirection between
  * ContactAccessorNewApi and ContactAccesorOldApi, which corresponded
  * to the API changes between 1.x and 2.x.
- * <p/>
+ *
  * Now that we no longer support 1.x, this class mostly serves as a place
  * to encapsulate Contact-related logic.  It's still a singleton, mostly
  * just because that's how it's currently called from everywhere.
@@ -72,7 +72,7 @@ public class ContactAccessor {
     }
 
     public CursorLoader getCursorLoaderForContactsWithNumbers(Context context) {
-        Uri uri = ContactsContract.Contacts.CONTENT_URI;
+        Uri uri          = ContactsContract.Contacts.CONTENT_URI;
         String selection = ContactsContract.Contacts.HAS_PHONE_NUMBER + " = 1";
 
         return new CursorLoader(context, uri, null, selection, null,
@@ -105,12 +105,12 @@ public class ContactAccessor {
         final String[] inProjection = new String[]{PhoneLookup._ID, PhoneLookup.DISPLAY_NAME};
         final String[] emailProjection = new String[]{ContactsContract.CommonDataKinds.Email.CONTACT_ID, ContactsContract.Contacts.DISPLAY_NAME};
 
-        List<String> pushNumbers = Directory.getInstance(context).getActiveNumbers();
+        List<String> pushNumbers = TextSecureDirectory.getInstance(context).getActiveNumbers();
         final Collection<ContactData> lookupData = new ArrayList<ContactData>(pushNumbers.size());
         Cursor lookupCursor = null;
 
         for (String pushNumber : pushNumbers) {
-            if (Util.isValidEmail(pushNumber)) {
+            if (org.whispersystems.textsecure.internal.util.Util.isValidEmail(pushNumber)) {
                 Uri uri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Email.CONTENT_FILTER_URI, pushNumber);
                 lookupCursor = resolver.query(uri, emailProjection, null, null, null);
             } else {
@@ -118,7 +118,6 @@ public class ContactAccessor {
                 lookupCursor = resolver.query(uri, inProjection, null, null, null);
 
             }
-
             try {
                 if (lookupCursor != null && lookupCursor.moveToFirst()) {
                     final ContactData contactData = new ContactData(lookupCursor.getLong(0), lookupCursor.getString(1));
@@ -137,7 +136,7 @@ public class ContactAccessor {
         Cursor cursor = null;
 
         try {
-            cursor = context.getContentResolver().query(uri, new String[]{Contacts.DISPLAY_NAME},
+            cursor = context.getContentResolver().query(uri, new String[] {Contacts.DISPLAY_NAME},
                     null, null, null);
 
             if (cursor != null && cursor.moveToFirst())
@@ -152,7 +151,7 @@ public class ContactAccessor {
     }
 
     public String getNameForNumber(Context context, String number) {
-        Uri uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
+        Uri uri       = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
         Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
 
         try {
@@ -167,7 +166,7 @@ public class ContactAccessor {
     }
 
     public GroupData getGroupData(Context context, Cursor cursor) {
-        long id = cursor.getLong(cursor.getColumnIndexOrThrow(ContactsContract.Groups._ID));
+        long id      = cursor.getLong(cursor.getColumnIndexOrThrow(ContactsContract.Groups._ID));
         String title = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Groups.TITLE));
 
         return new GroupData(id, title);
@@ -180,22 +179,22 @@ public class ContactAccessor {
     }
 
     public ContactData getContactData(Context context, Uri uri) {
-        return getContactData(context, getNameFromContact(context, uri), Long.parseLong(uri.getLastPathSegment()));
+        return getContactData(context, getNameFromContact(context, uri),  Long.parseLong(uri.getLastPathSegment()));
     }
 
     private ContactData getContactData(Context context, String displayName, long id) {
         ContactData contactData = new ContactData(id, displayName);
-        Cursor numberCursor = null;
+        Cursor numberCursor     = null;
 
         try {
             numberCursor = context.getContentResolver().query(Phone.CONTENT_URI, null,
                     Phone.CONTACT_ID + " = ?",
-                    new String[]{contactData.id + ""}, null);
+                    new String[] {contactData.id + ""}, null);
 
             while (numberCursor != null && numberCursor.moveToNext()) {
-                int type = numberCursor.getInt(numberCursor.getColumnIndexOrThrow(Phone.TYPE));
-                String label = numberCursor.getString(numberCursor.getColumnIndexOrThrow(Phone.LABEL));
-                String number = numberCursor.getString(numberCursor.getColumnIndexOrThrow(Phone.NUMBER));
+                int type         = numberCursor.getInt(numberCursor.getColumnIndexOrThrow(Phone.TYPE));
+                String label     = numberCursor.getString(numberCursor.getColumnIndexOrThrow(Phone.LABEL));
+                String number    = numberCursor.getString(numberCursor.getColumnIndexOrThrow(Phone.NUMBER));
                 String typeLabel = Phone.getTypeLabel(context.getResources(), type, label).toString();
 
                 contactData.numbers.add(new NumberData(typeLabel, number));
@@ -261,14 +260,14 @@ public class ContactAccessor {
         try {
             String selection = ContactsContract.CommonDataKinds.GroupMembership.GROUP_ROW_ID + " = ? AND " +
                     ContactsContract.CommonDataKinds.GroupMembership.MIMETYPE + " = ?";
-            String[] args = new String[]{groupId + "",
+            String[] args    = new String[] {groupId+"",
                     ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE};
 
             groupMembership = context.getContentResolver().query(Data.CONTENT_URI, null, selection, args, null);
 
             while (groupMembership != null && groupMembership.moveToNext()) {
                 String displayName = groupMembership.getString(groupMembership.getColumnIndexOrThrow(Data.DISPLAY_NAME));
-                long contactId = groupMembership.getLong(groupMembership.getColumnIndexOrThrow(Data.CONTACT_ID));
+                long contactId     = groupMembership.getLong(groupMembership.getColumnIndexOrThrow(Data.CONTACT_ID));
 
                 contacts.add(getContactData(context, displayName, contactId));
             }
@@ -282,13 +281,12 @@ public class ContactAccessor {
 
     public List<String> getNumbersForThreadSearchFilter(String constraint, ContentResolver contentResolver) {
         LinkedList<String> numberList = new LinkedList<String>();
-        Cursor cursor = null;
+        Cursor cursor                 = null;
 
         try {
             cursor = contentResolver.query(Uri.withAppendedPath(Phone.CONTENT_FILTER_URI,
                             Uri.encode(constraint)),
-                    null, null, null, null
-            );
+                    null, null, null, null);
 
             while (cursor != null && cursor.moveToNext()) {
                 numberList.add(cursor.getString(cursor.getColumnIndexOrThrow(Phone.NUMBER)));
@@ -305,7 +303,6 @@ public class ContactAccessor {
     public CharSequence phoneTypeToString(Context mContext, int type, CharSequence label) {
         return Phone.getTypeLabel(mContext.getResources(), type, label);
     }
-
     public void insertIdentityKey(Context context, List<Long> rawContactIds, IdentityKey identityKey) {
         for (long rawContactId : rawContactIds) {
             Log.w("ContactAccessorNewApi", "Inserting data for raw contact id: " + rawContactId);
@@ -354,7 +351,7 @@ public class ContactAccessor {
 
         try {
             cursor = context.getContentResolver().query(uri,
-                    new String[]{ContactsContract.Contacts._ID},
+                    new String[] {ContactsContract.Contacts._ID},
                     null, null, null);
 
             if (cursor != null && cursor.moveToFirst()) {
@@ -391,7 +388,7 @@ public class ContactAccessor {
 
         public NumberData(Parcel in) {
             number = in.readString();
-            type = in.readString();
+            type   = in.readString();
         }
 
         public int describeContents() {
@@ -409,7 +406,7 @@ public class ContactAccessor {
         public final String name;
 
         public GroupData(long id, String name) {
-            this.id = id;
+            this.id   = id;
             this.name = name;
         }
     }
@@ -431,21 +428,21 @@ public class ContactAccessor {
         public final List<NumberData> numbers;
 
         public ContactData(long id, String name) {
-            this.id = id;
-            this.name = name;
+            this.id      = id;
+            this.name    = name;
             this.numbers = new LinkedList<NumberData>();
         }
 
         public ContactData(long id, String name, List<NumberData> numbers) {
-            this.id = id;
-            this.name = name;
+            this.id      = id;
+            this.name    = name;
             this.numbers = numbers;
         }
 
 
         public ContactData(Parcel in) {
-            id = in.readLong();
-            name = in.readString();
+            id      = in.readLong();
+            name    = in.readString();
             numbers = new LinkedList<NumberData>();
             in.readTypedList(numbers, NumberData.CREATOR);
         }
@@ -461,13 +458,14 @@ public class ContactAccessor {
         }
     }
 
-    /**
+    /***
      * If the code below looks shitty to you, that's because it was taken
      * directly from the Android source, where shitty code is all you get.
      */
 
     public Cursor getCursorForRecipientFilter(CharSequence constraint,
-                                              ContentResolver mContentResolver) {
+                                              ContentResolver mContentResolver)
+    {
         final String SORT_ORDER = Contacts.TIMES_CONTACTED + " DESC," +
                 Contacts.DISPLAY_NAME + "," +
                 Contacts.Data.IS_SUPER_PRIMARY + " DESC," +
@@ -483,7 +481,7 @@ public class ContactAccessor {
         };
 
         String phone = "";
-        String cons = null;
+        String cons  = null;
 
         if (constraint != null) {
             cons = constraint.toString();
@@ -532,7 +530,7 @@ public class ContactAccessor {
 
             ArrayListCursor translated = new ArrayListCursor(PROJECTION_PHONE, wrap);
 
-            return new MergeCursor(new Cursor[]{translated, phoneCursor});
+            return new MergeCursor(new Cursor[] { translated, phoneCursor });
         } else {
             return phoneCursor;
         }

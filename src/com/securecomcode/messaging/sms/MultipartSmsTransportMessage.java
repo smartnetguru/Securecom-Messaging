@@ -7,9 +7,8 @@ import com.securecomcode.messaging.protocol.KeyExchangeWirePrefix;
 import com.securecomcode.messaging.protocol.PrekeyBundleWirePrefix;
 import com.securecomcode.messaging.protocol.SecureMessageWirePrefix;
 import com.securecomcode.messaging.protocol.WirePrefix;
-import org.whispersystems.textsecure.util.Base64;
-import org.whispersystems.textsecure.util.Conversions;
-import org.whispersystems.textsecure.util.Hex;
+import com.securecomcode.messaging.util.Base64;
+import com.securecomcode.messaging.util.Conversions;
 
 import java.io.IOException;
 import java.util.ArrayList;
